@@ -1,3 +1,7 @@
-h1. How to build the project
+h1. Project guidelines
 
-*TODO* 
+h2. Issues
+
+Issues, features, etc (tickets in general) are not managed by the GitHub Issue tracking built-in feature,
+for a more fine control they're all located at Lighthouse: "http://brushingbits.lighthouseapp.com/projects/54712-jnap/":http://brushingbits.lighthouseapp.com/projects/54712-jnap/ 
+
