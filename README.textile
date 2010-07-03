@@ -28,7 +28,7 @@ p. TODO
 
 h3. 1.3. Other IDEs
 
-p. TODO
+p. Due to the Maven nature of the project it's easier to use diferent IDEs without mess the project's organization. Altough you are free to use any IDE you want *you must not push any IDE specific file to the repository*. The only IDE-speficic files that are versioned are those from Eclipse, the recommended IDE for this project development.
 
 h2. 2. Issues
 
@@ -38,6 +38,14 @@ for a more fine control and a diferent workflow they're all located at Lighthous
 h3. 2.1. Lighthouse service hook
 
 p. The lighthouse service hook is enabled, that means that a commiter can (_and should_) update tickets from commit messages using the very simple Lighthouse API.
+p. The full details can be found at this "Lighthouse API FAQ Page":http://help.lighthouseapp.com/faqs/ticket-workflow/ticket-keyword-updates.
+p. Here are some simple examples:
+
+@Requested feature implemented [#10 milestone:next state:committed]@
+This commit message will update the ticket _#10_, adding the message to the ticket's log, moving it to the _current milestone_ and changing its state to _committed_. Pretty simple, huh? Here's another one:
+
+@Bug fixed. Now the interface must be reviewed [#51 tagged:gui responsible:rico]@
+This commit message will update the ticket _#51_, adding the message to the ticket's log, adding the tag _gui_ and modifying the responsible user to _rico_.
 
 h2. 3. Documentation, discussions and help
 
