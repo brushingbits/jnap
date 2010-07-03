@@ -1,7 +1,12 @@
 h1. Project guidelines
 
-h2. Issues
+p. Here you will find general information about the project, such as how to create your project in you IDE, how to manage tickets. (_TODO: complete this paragraph_)
 
-Issues, features, etc (tickets in general) are not managed by the GitHub Issue tracking built-in feature,
-for a more fine control they're all located at Lighthouse: "http://brushingbits.lighthouseapp.com/projects/54712-jnap/":http://brushingbits.lighthouseapp.com/projects/54712-jnap/ 
+Table of contents:
+{toc}
+
+h2. 1. Issues
+
+p. Issues, features, etc (tickets in general) are not managed by the GitHub Issue tracking built-in feature,
+for a more fine control and a diferent workflow they're all located at Lighthouse: "http://brushingbits.lighthouseapp.com/projects/54712-jnap/":http://brushingbits.lighthouseapp.com/projects/54712-jnap/ 
 
