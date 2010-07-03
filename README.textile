@@ -2,8 +2,7 @@ h1. Project guidelines
 
 p. Here you will find general information about the project, such as how to configure the project in your IDE, how to manage tickets. (_TODO: complete this paragraph_)
 
-*Table of contents:* 
-
+*Table of contents:*
 * 1. Configuring the project
 ** 1.1. About Maven
 ** 1.2. Using Eclipse
@@ -13,6 +12,7 @@ p. Here you will find general information about the project, such as how to conf
 * 3. Documentation, discussions and help
 * 4. License
 * 5. Open Source! How to contribute?
+
 
 h2. 1. Configuring the project
 
@@ -45,7 +45,9 @@ p. TODO
 
 h2. 4. License
 
-p. TODO
+p. This project is licensed under the *Apache License 2.0*. Summarizing, this is a license that is supposed to be compatible with other open source licenses, while remaining true to supportive and collaborative development across both nonprofit and commercial organizations.
+
+p. Read the "License":http://www.apache.org/licenses/LICENSE-2.0.txt or see the "License FAQ":http://www.apache.org/foundation/licence-FAQ.html.
 
 h2. 5. Open Source! How to contribute?
 
