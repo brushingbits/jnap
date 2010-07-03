@@ -32,13 +32,11 @@ p. Due to the Maven nature of the project it's easier to use diferent IDEs witho
 
 h2. 2. Issues
 
-p. Issues, features, etc (tickets in general) are not managed by the GitHub Issue tracking built-in feature,
-for a more fine control and a diferent workflow they're all located at Lighthouse: "http://brushingbits.lighthouseapp.com/projects/54712-jnap/":http://brushingbits.lighthouseapp.com/projects/54712-jnap/ 
+p. Issues, features, etc (tickets in general) are not managed by the GitHub Issue tracking built-in feature (which is simple and great, by the way), for a more fine control and a diferent workflow they're all located at Lighthouse: "http://brushingbits.lighthouseapp.com/projects/54712-jnap/":http://brushingbits.lighthouseapp.com/projects/54712-jnap/ 
 
 h3. 2.1. Lighthouse service hook
 
-p. The lighthouse service hook is enabled, that means that a commiter can (_and should_) update tickets from commit messages using the very simple Lighthouse API.
-The full details can be found at this "Lighthouse API FAQ Page":http://help.lighthouseapp.com/faqs/ticket-workflow/ticket-keyword-updates.
+p. The lighthouse service hook is enabled, that means that a commiter can (_and should_) update tickets from commit messages using the very simple Lighthouse API. The full details can be found at this "Lighthouse API FAQ Page":http://help.lighthouseapp.com/faqs/ticket-workflow/ticket-keyword-updates.
 
 p. Here are some simple examples:
 
