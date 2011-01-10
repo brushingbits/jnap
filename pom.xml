@@ -3,12 +3,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.brushingbits</groupId>
+	<groupId>org.brushingbits</groupId>
 	<artifactId>jnap</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.0</version>
+	<version>0.5.1</version>
 	<name>jNap... go REST!</name>
-	<url>http://www.brushingbits.com/projects/jnap</url>
+	<url>http://www.brushingbits.org/projects/jnap</url>
 	<description><![CDATA[TODO]]></description>
 
 	<licenses>
@@ -25,6 +25,11 @@
 		<url>http://github.com/brushingbits/jnap</url>
 	</scm>
 
+	<issueManagement>
+		<system>GitHub</system>
+		<url>http://github.com/brushingbits/jnap/issues/</url>
+	</issueManagement>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -38,17 +43,21 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.7</version>
+				<version>2.8</version>
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<properties>
-		<struts.version>2.1.8.1</struts.version>
-		<spring.version>3.0.2.RELEASE</spring.version>
-		<jersey.version>1.3</jersey.version>
-		<jackson.version>1.5.3</jackson.version>
-		<hibernate.version>3.5.1-Final</hibernate.version>
+		<struts.version>2.2.1.1</struts.version>
+		<tiles.version>2.1.4</tiles.version>
+		<spring.version>3.0.5.RELEASE</spring.version>
+		<jersey.version>1.4</jersey.version>
+		<jackson.version>1.6.4</jackson.version>
+		<hibernate.version>3.5.6-Final</hibernate.version>
+		<hannotations.version>3.5.6-Final</hannotations.version>
+		<hsearch.version>3.2.0.Final</hsearch.version>
+		<hvalidator.version>4.1.0.Final</hvalidator.version>
 	</properties>
 
 	<dependencies>
@@ -84,6 +93,37 @@
 			<artifactId>struts2-convention-plugin</artifactId>
 			<version>${struts.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.struts</groupId>
+			<artifactId>struts2-tiles-plugin</artifactId>
+			<version>${struts.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- Tiles -->
+		<dependency>
+			<groupId>org.apache.tiles</groupId>
+			<artifactId>tiles-api</artifactId>
+			<version>${tiles.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tiles</groupId>
+			<artifactId>tiles-core</artifactId>
+			<version>${tiles.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tiles</groupId>
+			<artifactId>tiles-jsp</artifactId>
+			<version>${tiles.version}</version>
+			<scope>compile</scope>
+		</dependency>
 
 		<!-- Spring -->
 		<dependency>
@@ -106,6 +146,12 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>${spring.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
 			<artifactId>spring-orm</artifactId>
 			<version>${spring.version}</version>
 			<scope>compile</scope>
@@ -119,6 +165,20 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
+			<version>${spring.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Spring Security -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-core</artifactId>
+			<version>${spring.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-taglibs</artifactId>
 			<version>${spring.version}</version>
 			<scope>compile</scope>
 		</dependency>
@@ -175,6 +235,14 @@
 			<scope>compile</scope>
 		</dependency>
 
+		<!-- Rome (Feed Library) -->
+		<dependency>
+			<groupId>rome</groupId>
+			<artifactId>rome</artifactId>
+			<version>1.0</version>
+			<scope>compile</scope>
+		</dependency>
+
 		<!-- Commons -->
 		<dependency>
 			<groupId>commons-lang</groupId>
@@ -188,31 +256,35 @@
 			<version>1.8.3</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>commons-email</groupId>
+			<artifactId>commons-email</artifactId>
+			<version>1.1</version>
+			<scope>compile</scope>
+		</dependency>
 
 		<!-- Hibernate -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
 			<version>${hibernate.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-annotations</artifactId>
-			<version>${hibernate.version}</version>
-			<scope>compile</scope>
+			<version>${hannotations.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-search</artifactId>
-			<version>3.2.0.CR1</version>
+			<version>${hsearch.version}</version>
 		</dependency>
 
 		<!-- Hibernate Validator (JSR-330) -->
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>4.0.2.GA</version>
+			<version>${hvalidator.version}</version>
 		</dependency>
 
 		<!-- Javassist -->
