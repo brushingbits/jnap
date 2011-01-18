@@ -30,7 +30,7 @@ import javax.mail.internet.MimeMessage;
 public abstract class TemplateEmail extends Email {
 
 	private String headerTemplateName;
-	private String templateName;
+	private String bodyTemplateName;
 	private String footerTemplateName;
 
 	protected Map<String, Object> values;
@@ -70,12 +70,12 @@ public abstract class TemplateEmail extends Email {
 		this.headerTemplateName = headerTemplateName;
 	}
 
-	public String getTemplateName() {
-		return templateName;
+	public String getBodyTemplateName() {
+		return bodyTemplateName;
 	}
 
-	public void setTemplateName(String templateName) {
-		this.templateName = templateName;
+	public void setBodyTemplateName(String templateName) {
+		this.bodyTemplateName = templateName;
 	}
 
 	public String getFooterTemplateName() {

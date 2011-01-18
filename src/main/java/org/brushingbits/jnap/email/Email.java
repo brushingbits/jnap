@@ -29,7 +29,6 @@ import org.apache.commons.lang.StringUtils;
 import org.brushingbits.jnap.i18n.I18nTextProvider;
 import org.brushingbits.jnap.i18n.struts2.I18nTextProviderImpl;
 import org.springframework.core.io.Resource;
-import org.springframework.mail.MailPreparationException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.MimeMessagePreparator;
@@ -67,6 +66,8 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 	}
 
 	public void prepare(MimeMessage mimeMessage) throws Exception {
+		validate();
+		final EmailAccountInfo acc = getAccountInfo();
 		boolean multipart = StringUtils.isNotBlank(getHtmlText())
 				|| (getInlineResources() != null && getInlineResources().size() > 0)
 				|| (getAttachments() != null && getAttachments().size() > 0);
@@ -80,16 +81,26 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 		}
 		helper.setSentDate(new Date());
 		helper.setSubject(i18nTextProvider.getText(getSubject()));
-		
+
+		// sender info
+//		if (acc != null && StringUtils.isNotBlank(acc.getFromName())) {
+//			helper.setFrom(getFrom(), i18nTextProvider.getText(acc.getFromName()));
+//		} else {
+//			helper.setFrom(getFrom());
+//		}
+		if (acc != null && StringUtils.isNotBlank(acc.getReplyToEmailAddress())) {
+			if (StringUtils.isNotBlank(acc.getReplyToName())) {
+				helper.setReplyTo(acc.getReplyToEmailAddress(), acc.getReplyToName());
+			} else {
+				helper.setReplyTo(acc.getReplyToEmailAddress());
+			}
+		}
+
 		final boolean hasHtmlText = StringUtils.isNotBlank(getHtmlText());
 		final boolean hasText = StringUtils.isNotBlank(getText());
-		if (!hasText && !hasHtmlText) {
-			// TODO msg
-			throw new MailPreparationException("");
-		}
 		if (hasHtmlText && hasText) {
 			helper.setText(getText(), getHtmlText());
-		} else {
+		} else if (hasHtmlText || hasText) {
 			helper.setText(hasHtmlText ? getHtmlText() : getText());
 		}
 
@@ -107,6 +118,10 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 				helper.addAttachment(attachmentName, attachments.get(attachmentName));
 			}
 		}
+	}
+
+	protected void validate() {
+		
 	}
 
 	/**

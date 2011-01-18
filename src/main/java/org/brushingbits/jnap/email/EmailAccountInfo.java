@@ -30,9 +30,14 @@ import org.apache.commons.lang.builder.ToStringBuilder;
  */
 public class EmailAccountInfo {
 
-	public static final String SMTP = "smtp";
+	public static final String PROTOCOL_SMTP = "smtp";
 
-	public static final String SMTPS = "smtps";
+	public static final String PROTOCOL_SMTPS = "smtps";
+
+	public static final String MODE_SSL = "SSL";
+	
+	public static final String MODE_TLS = "TLS";
+	
 
 	private String username;
 	private String password;
@@ -42,7 +47,8 @@ public class EmailAccountInfo {
 	private String replyToName;
 	private String fromEmailAddress;
 	private String fromName;
-	private String protocol = SMTP;
+	private String protocol = PROTOCOL_SMTP;
+	private String mode;
 	private boolean startTls = true;
 
 	private Properties javaMailProperties;
@@ -127,9 +133,18 @@ public class EmailAccountInfo {
 		this.startTls = startTls;
 	}
 
+	public String getMode() {
+		return mode;
+	}
+
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
 	/**
-	 * 
-	 * @return
+	 * Constructs a {@link Properties} object based on
+	 * <a href="http://java.sun.com/products/javamail/javadocs/overview-summary.html" target="_blank">JavaMail Spec</>.
+	 * @return a JavaMail properties object.
 	 */
 	public Properties getJavaMailProperties() {
 		if (this.javaMailProperties == null) {
@@ -143,7 +158,12 @@ public class EmailAccountInfo {
 			if (getUsername() != null) {
 				props.put("mail.smtp.auth", Boolean.TRUE.toString());
 			}
-			props.put("mail.smtp.starttls.enable", Boolean.toString(isStartTls()));
+			if (MODE_TLS.equalsIgnoreCase(getMode())) {
+				props.put("mail.smtp.starttls.enable", Boolean.toString(isStartTls()));
+			} else if (MODE_SSL.equalsIgnoreCase(getMode())) {
+				props.put("mail.smtp.socketFactory.port", getPort());
+				props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+			}
 
 			this.javaMailProperties = props;
 		}

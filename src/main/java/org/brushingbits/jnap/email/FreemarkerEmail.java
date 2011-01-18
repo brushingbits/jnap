@@ -53,7 +53,7 @@ public class FreemarkerEmail extends TemplateEmail {
 			}
 
 			// Body
-			Template body = getTemplate(getTemplateName());
+			Template body = getTemplate(getBodyTemplateName());
 			String bodyContent = FreeMarkerTemplateUtils.processTemplateIntoString(body, values);
 			htmlMsg.append(bodyContent);
 			if (isMixedContent()) {

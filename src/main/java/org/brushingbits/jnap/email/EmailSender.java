@@ -23,29 +23,41 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessagePreparator;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.util.Assert;
 
 
 /**
  * @author Daniel Rochetti
  * @since 1.0
  */
-public class EmailSender {
+public class EmailSender implements InitializingBean, DisposableBean, Runnable {
 
 	private static Log logger = LogFactory.getLog(EmailSender.class);
 
 	private static final int DEFAULT_NUM_RETRIES = 10;
 
-	private JavaMailSenderImpl javaMailSender;
-	private EmailAccountInfo defaultEmailAccount;
-	private int numberOfRetries = DEFAULT_NUM_RETRIES;
+	private JavaMailSenderImpl defaultMailSender;
+	private Map<EmailAccountInfo, JavaMailSenderImpl> mailSenderMap; 
 	private List<Email> toSendList;
 	private Map<Email, Integer> toRetryList;
+	private ThreadPoolTaskScheduler taskScheduler;
+	private ScheduledFuture scheduledAsyncSender;
+
+	private EmailAccountInfo defaultEmailAccount;
+	private int numberOfRetries = DEFAULT_NUM_RETRIES;
+	private long asyncSendInterval = 30000;
+	private int asyncThreadPoolSize = 4;
 
 	public EmailSender() {
 		this(null);
@@ -55,20 +67,47 @@ public class EmailSender {
 		this.toSendList = Collections.synchronizedList(new ArrayList<Email>());
 		this.toRetryList = new HashMap<Email, Integer>();
 		this.defaultEmailAccount = defaultEmailAccount;
-		this.javaMailSender = new JavaMailSenderImpl();
+		this.defaultMailSender = new JavaMailSenderImpl();
+		this.mailSenderMap = Collections.synchronizedMap(new HashMap<EmailAccountInfo, JavaMailSenderImpl>());
+	}
+
+	public void afterPropertiesSet() throws Exception {
+		Assert.notNull(this.defaultEmailAccount, "You must provide a default email account configuration.");
+		this.defaultMailSender.setJavaMailProperties(this.defaultEmailAccount.getJavaMailProperties());
+		if (StringUtils.isNotBlank(this.defaultEmailAccount.getUsername())) {
+			this.defaultMailSender.setUsername(this.defaultEmailAccount.getUsername());
+			this.defaultMailSender.setPassword(this.defaultEmailAccount.getPassword());
+		}
+		this.taskScheduler = new ThreadPoolTaskScheduler();
+		this.taskScheduler.setPoolSize(this.asyncThreadPoolSize);
+		this.taskScheduler.initialize();
+		this.scheduledAsyncSender = this.taskScheduler.scheduleWithFixedDelay(this, this.asyncSendInterval);
+	}
+
+	public void destroy() throws Exception {
+		this.scheduledAsyncSender.cancel(false);
+		this.taskScheduler.destroy();
 	}
 
 	public void send(Email email) {
 		EmailAccountInfo accountInfo = defaultEmailAccount;
+		JavaMailSenderImpl sender = this.defaultMailSender;
 		if (email.getAccountInfo() != null) {
 			accountInfo = email.getAccountInfo();
+			synchronized (this.mailSenderMap) {
+				sender = this.mailSenderMap.get(accountInfo);
+				if (sender == null) {
+					sender = new JavaMailSenderImpl();
+					Properties props = new Properties(this.defaultEmailAccount.getJavaMailProperties());
+					props.putAll(accountInfo.getJavaMailProperties());
+					sender.setJavaMailProperties(props);
+					sender.setUsername(accountInfo.getUsername());
+					sender.setPassword(accountInfo.getPassword());
+					this.mailSenderMap.put(accountInfo, sender);
+				}
+			}
 		}
-		this.javaMailSender.setJavaMailProperties(accountInfo.getJavaMailProperties());
-		if (accountInfo.getUsername() != null) {
-			this.javaMailSender.setUsername(accountInfo.getUsername());
-			this.javaMailSender.setPassword(accountInfo.getPassword());
-		}
-		this.javaMailSender.send((MimeMessagePreparator) email);
+		sender.send((MimeMessagePreparator) email);
 	}
 
 	public void sendAsync(Email email) {
@@ -80,8 +119,7 @@ public class EmailSender {
 	/**
 	 * 
 	 */
-	@Scheduled(fixedDelay = 30000)
-	public void dispatchMessages() {
+	public void run() {
 		List<Email> emails = new ArrayList<Email>();
 		synchronized (toSendList) {
 			if (toSendList.isEmpty()) {
@@ -118,6 +156,14 @@ public class EmailSender {
 
 	public void setNumberOfRetries(int numberOfRetries) {
 		this.numberOfRetries = numberOfRetries;
+	}
+
+	public long getAsyncSendInterval() {
+		return asyncSendInterval;
+	}
+
+	public void setAsyncSendInterval(long asyncSendInterval) {
+		this.asyncSendInterval = asyncSendInterval;
 	}
 
 	public EmailAccountInfo getDefaultEmailAccount() {
