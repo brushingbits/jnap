@@ -1,5 +1,5 @@
 /*
- * FullTextDao.java created on 15/03/2010
+ * FullTextDao.java created on 2010-03-15
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org
@@ -27,13 +27,32 @@ import org.brushingbits.jnap.bean.model.IndexedModel;
 /**
  * 
  * @author Daniel Rochetti
+ * @since 1.0
  *
  * @param <E>
  */
 public interface FullTextDao<E extends IndexedModel> extends Dao<E> {
 
+	/**
+	 * 
+	 * @param docId
+	 * @return
+	 */
 	public E searchByDocId(Serializable docId);
 
+	/**
+	 * 
+	 * @param keywords
+	 * @return
+	 */
 	public List<E> searchByKeywords(String keywords);
+
+	/**
+	 * 
+	 * @param keywords
+	 * @param leadingWildcard
+	 * @return
+	 */
+	public List<E> searchByKeywords(String keywords, boolean leadingWildcard);
 
 }

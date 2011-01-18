@@ -1,5 +1,5 @@
 /*
- * DaoSupport.java created on 15/03/2010
+ * DaoSupport.java created on 2010-03-15
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org
@@ -23,16 +23,20 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.brushingbits.jnap.bean.model.LogicalDelete;
 import org.brushingbits.jnap.bean.model.PersistentModel;
 import org.brushingbits.jnap.bean.paging.PagingDataHolder;
 import org.brushingbits.jnap.bean.paging.PagingSetup;
 import org.brushingbits.jnap.persistence.Dao;
 import org.brushingbits.jnap.util.ReflectionUtils;
 import org.hibernate.Criteria;
+import org.hibernate.NonUniqueResultException;
 import org.hibernate.Query;
+import org.hibernate.QueryException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.criterion.Order;
+import org.hibernate.hql.ast.QuerySyntaxException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -46,16 +50,53 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 
 	protected SessionFactory sessionFactory;
-	protected boolean defaultPaging = true;
+	protected boolean defaultPaging = false;
 	protected Order defaultOrder;
 
-	@Autowired
-	protected void setSessionFactory(SessionFactory sessionFactory) {
-		this.sessionFactory = sessionFactory;
+	protected Integer count(Query query) {
+		if (!query.getQueryString().toLowerCase().startsWith("select count(")) {
+			throw new QuerySyntaxException("The count query must start with a 'select count clause'",
+					query.getQueryString());
+		}
+		Number quantity = (Number) query.uniqueResult();
+		return quantity == null ? 0 : quantity.intValue();
 	}
 
-	protected Session getSession() {
-		return sessionFactory.getCurrentSession();
+	protected Integer count(String hql, Object... params) {
+		Query query = getSession().createQuery(hql);
+		setIndexedParameters(query, params);
+		return count(query);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.brushingbits.jnap.persistence.Dao#delete(org.brushingbits.jnap.bean.model.PersistentModel)
+	 */
+	public void delete(E entity) {
+		if (entity instanceof LogicalDelete) {
+			((LogicalDelete) entity).delete();
+			update(entity);
+		} else {
+			getSession().delete(resolveEntityName(), entity);
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.brushingbits.jnap.persistence.Dao#delete(java.util.List)
+	 */
+	public void delete(List<E> entities) {
+		if (entities != null && !entities.isEmpty()) {
+			for (E entity : entities) {
+				delete(entity);
+			}
+		}
+	}
+
+	protected void doPaging(Criteria criteria) {
+		setupPaging(new CriteriaPagingSetup(criteria));
+	}
+
+	protected void doPaging(Query query) {
+		setupPaging(new QueryPagingSetup(query));
 	}
 
 	private List<E> doQuery(String hql, boolean paging, Object params) {
@@ -69,50 +110,10 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 				setNamedParameters(query, (Map<String, ?>) params);
 			}
 		}
-
+		if (paging) {
+			doPaging(query);
+		}
 		return query.list();
-	}
-
-	/**
-	 * 
-	 * @param query
-	 * @param params
-	 */
-	protected void setNamedParameters(Query query, Map<String, ?> params) {
-		if (params != null && !params.isEmpty()) {
-			for (String name : params.keySet()) {
-				query.setParameter(name, params.get(name));
-			}
-		}
-	}
-
-	/**
-	 * 
-	 * @param query
-	 * @param params
-	 */
-	protected void setIndexedParameters(Query query, Object[] params) {
-		if (params != null && params.length > 0) {
-			for (int i = 0; i < params.length; i++) {
-				query.setParameter(i, params[i]);
-			}
-		}
-	}
-
-	protected void configurePaging() {
-		
-	}
-
-	protected List<E> find(String hql, boolean paging, Object... params) {
-		return doQuery(hql, paging, params);
-	}
-
-	protected List<E> find(String hql, Object... params) {
-		return find(hql, this.defaultPaging, params);
-	}
-
-	protected List<E> find(String hql, List<?> params) {
-		return find(hql, params.toArray());
 	}
 
 	protected List<E> find(String hql) {
@@ -123,30 +124,24 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return find(hql, paging, ArrayUtils.EMPTY_OBJECT_ARRAY);
 	}
 
-	protected List<E> find(String hql, Map<String, ?> namedParams) {
-		return find(hql, this.defaultPaging, namedParams);
-	}
-
 	protected List<E> find(String hql, boolean paging, Map<String, ?> namedParams) {
 		return doQuery(hql, paging, namedParams);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#delete(org.brushingbits.jnap.bean.model.PersistentModel)
-	 */
-	public void delete(E entity) {
-		getSession().delete(resolveEntityName(), entity);
+	protected List<E> find(String hql, boolean paging, Object... params) {
+		return doQuery(hql, paging, params);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#delete(java.util.List)
-	 */
-	public void delete(List<E> entities) {
-		if (entities != null && !entities.isEmpty()) {
-			for (E entity : entities) {
-				delete(entity);
-			}
-		}
+	protected List<E> find(String hql, List<?> params) {
+		return find(hql, params.toArray());
+	}
+
+	protected List<E> find(String hql, Map<String, ?> namedParams) {
+		return find(hql, this.defaultPaging, namedParams);
+	}
+
+	protected List<E> find(String hql, Object... params) {
+		return find(hql, this.defaultPaging, params);
 	}
 
 	/* (non-Javadoc)
@@ -171,16 +166,6 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return criteria.list();
 	}
 
-	
-	public E findUniqueByExample(E example) {
-		List<E> result = findByExample(example);
-		E unique = null;
-		if (result != null && result.size() == 1) {
-			unique = result.get(0);
-		}
-		return unique;
-	}
-
 	/* (non-Javadoc)
 	 * @see org.brushingbits.jnap.persistence.Dao#findById(java.io.Serializable)
 	 */
@@ -188,22 +173,32 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return (E) getSession().load(resolveEntityName(), id);
 	}
 
+	/**
+	 * 
+	 * @param hql
+	 * @param params
+	 * @return
+	 * @throws QueryException
+	 */
+	protected E findUnique(String hql, Object... params) throws QueryException {
+		return handleUniqueResult(find(hql, false, params));
+	}
+
+	public E findUniqueByExample(E example) {
+		return handleUniqueResult(findByExample(example));
+	}
+
+	
 	public E getById(Serializable id) {
 		return (E) getSession().get(resolveEntityName(), id);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#insert(org.brushingbits.jnap.bean.model.PersistentModel)
+	/**
+	 * 
+	 * @return
 	 */
-	public void insert(E entity) {
-		getSession().save(resolveEntityName(), entity);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#update(org.brushingbits.jnap.bean.model.PersistentModel)
-	 */
-	public void update(E entity) {
-		getSession().update(resolveEntityName(), entity);
+	protected Order getDefaultOrder() {
+		return defaultOrder;
 	}
 
 	/**
@@ -222,6 +217,29 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return null;
 	}
 
+	protected Session getSession() {
+		return sessionFactory.getCurrentSession();
+	}
+
+	protected E handleUniqueResult(List<E> result) throws QueryException {
+		E uniqueResult = null;
+		if (result != null && result.size() > 0) {
+			if (result.size() == 1) {
+				uniqueResult = result.get(0);
+			} else {
+				throw new NonUniqueResultException(result.size());
+			}
+		}
+		return uniqueResult;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.brushingbits.jnap.persistence.Dao#insert(org.brushingbits.jnap.bean.model.PersistentModel)
+	 */
+	public void insert(E entity) {
+		getSession().save(resolveEntityName(), entity);
+	}
+
 	/**
 	 * 
 	 * @return
@@ -232,24 +250,46 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 
 	/**
 	 * 
-	 * @return
+	 * @param query
+	 * @param params
 	 */
-	protected Order getDefaultOrder() {
-		return defaultOrder;
+	protected void setIndexedParameters(Query query, Object[] params) {
+		if (params != null && params.length > 0) {
+			for (int i = 0; i < params.length; i++) {
+				query.setParameter(i, params[i]);
+			}
+		}
 	}
 
-	protected void doPaging(Query query) {
-		setupPaging(new QueryPagingSetup(query));
+	/**
+	 * 
+	 * @param query
+	 * @param params
+	 */
+	protected void setNamedParameters(Query query, Map<String, ?> params) {
+		if (params != null && !params.isEmpty()) {
+			for (String name : params.keySet()) {
+				query.setParameter(name, params.get(name));
+			}
+		}
 	}
 
-	protected void doPaging(Criteria criteria) {
-		setupPaging(new CriteriaPagingSetup(criteria));
+	@Autowired
+	protected void setSessionFactory(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
 	}
 
 	private void setupPaging(PagingSetup pagingSetup) {
 		pagingSetup.setFirstResult(PagingDataHolder.getCurrentPage());
 		pagingSetup.setResultsPerPage(PagingDataHolder.getResultsPerPage());
 		PagingDataHolder.setTotal(pagingSetup.countTotal());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.brushingbits.jnap.persistence.Dao#update(org.brushingbits.jnap.bean.model.PersistentModel)
+	 */
+	public void update(E entity) {
+		getSession().update(resolveEntityName(), entity);
 	}
 
 }
