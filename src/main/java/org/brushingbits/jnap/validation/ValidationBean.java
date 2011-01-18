@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import com.opensymphony.xwork2.ValidationAware;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
@@ -35,6 +37,7 @@ public class ValidationBean {
 
 	private String exceptionMsg;
 	private String exceptionType;
+	private String exceptionStack;
 	private List<String> errors;
 	private List<String> messages;
 	private List<FieldError> fieldErrors;
@@ -126,6 +129,7 @@ public class ValidationBean {
 	public void setException(Throwable t) {
 		this.exceptionMsg = t.getMessage();
 		this.exceptionType = t.getClass().getName();
+		this.exceptionStack = ExceptionUtils.getFullStackTrace(t);
 	}
 
 	/**
@@ -140,6 +144,13 @@ public class ValidationBean {
 	 */
 	public String getExceptionType() {
 		return exceptionType;
+	}
+	
+	/**
+	 * <code>Accessor</code> ("getter") method for property <code>exceptionStack</code>.
+	 */
+	public String getExceptionStack() {
+		return exceptionStack;
 	}
 
 	/**
