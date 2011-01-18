@@ -25,7 +25,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang.StringUtils;
 import org.brushingbits.jnap.struts2.MediaTypeHandler;
-import org.brushingbits.jnap.struts2.Response;
+import org.brushingbits.jnap.web.Response;
 
 
 /**

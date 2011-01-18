@@ -28,10 +28,12 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import javax.validation.groups.Default;
 
 import org.apache.struts2.interceptor.validation.SkipValidation;
 import org.brushingbits.jnap.util.ReflectionUtils;
+import org.brushingbits.jnap.validation.Struts2MessageInterpolator;
 import org.brushingbits.jnap.validation.ValidationConfig;
 import org.springframework.util.AntPathMatcher;
 
@@ -56,18 +58,18 @@ public class ValidationInterceptor extends MethodFilterInterceptor {
 
 	private final static String VALIDATE_PREFIX = "validate";
 
-	protected Validator validator;
+	protected ValidatorFactory validatorFactory;
 	protected AntPathMatcher pathMatcher;
 
 	@Override
 	public void init() {
 		super.init();
-		this.validator = Validation.buildDefaultValidatorFactory().getValidator();
 		this.pathMatcher = new AntPathMatcher();
 	}
 
 	@Override
 	protected String doIntercept(ActionInvocation invocation) throws Exception {
+		this.validatorFactory = Validation.buildDefaultValidatorFactory();
 		doBeforeInvocation(invocation);
 		return invocation.invoke();
 	}
@@ -80,8 +82,7 @@ public class ValidationInterceptor extends MethodFilterInterceptor {
 	 */
 	protected void doBeforeInvocation(ActionInvocation invocation) throws Exception {
 		Object action = invocation.getAction();
-		Method method = action.getClass().getMethod(
-				invocation.getProxy().getMethod(), new Class[] {});
+		Method method = action.getClass().getMethod(invocation.getProxy().getMethod(), new Class[] {});
 
 		ValidationConfig validationConfig = ReflectionUtils.getAnnotation(ValidationConfig.class, method);
 		boolean shouldValidate = ReflectionUtils.getAnnotation(SkipValidation.class, method) == null
@@ -104,6 +105,10 @@ public class ValidationInterceptor extends MethodFilterInterceptor {
 
 			Map<String, List<String>> fieldErrors = new HashMap<String, List<String>>();
 			Map<String, Object> parameters = ActionContext.getContext().getParameters();
+			
+			// Build the validator TODO customize message and tranversable
+			Validator validator = this.validatorFactory.usingContext().messageInterpolator(
+					new Struts2MessageInterpolator(action)).getValidator();
 			Set<ConstraintViolation<Object>> violations = validator.validate(action, groups);
 			for (ConstraintViolation<Object> constraintViolation : violations) {
 				String propertyName = constraintViolation.getPropertyPath().toString();

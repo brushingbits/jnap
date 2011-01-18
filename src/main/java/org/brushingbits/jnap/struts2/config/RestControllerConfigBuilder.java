@@ -42,8 +42,8 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.ExceptionMappings;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.brushingbits.jnap.JnapConstants;
-import org.brushingbits.jnap.struts2.Response;
 import org.brushingbits.jnap.util.ReflectionUtils;
+import org.brushingbits.jnap.web.Response;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -307,7 +307,7 @@ public class RestControllerConfigBuilder extends DefaultPackageBasedActionConfig
 			actionConfig.addExceptionMappings(buildExceptionMappings(exceptionMappings.value(), actionName));
 		}
 
-        //add
+        // add
         pkgCfg.addActionConfig(fullActionName, actionConfig.build());
 	}
 	

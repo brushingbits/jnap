@@ -5,6 +5,8 @@ import java.io.Writer;
 
 import javax.ws.rs.core.MediaType;
 
+import org.brushingbits.jnap.web.Response;
+
 
 /**
  * 

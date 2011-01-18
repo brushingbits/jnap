@@ -23,7 +23,7 @@ import java.io.Writer;
 
 import javax.ws.rs.core.MediaType;
 
-import org.brushingbits.jnap.struts2.Response;
+import org.brushingbits.jnap.web.Response;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;

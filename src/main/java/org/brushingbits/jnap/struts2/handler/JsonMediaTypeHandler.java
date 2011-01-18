@@ -23,7 +23,7 @@ import java.io.Writer;
 
 import javax.ws.rs.core.MediaType;
 
-import org.brushingbits.jnap.struts2.Response;
+import org.brushingbits.jnap.web.Response;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;

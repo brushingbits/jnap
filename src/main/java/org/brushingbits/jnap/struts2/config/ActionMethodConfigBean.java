@@ -79,17 +79,14 @@ class ActionMethodConfigBean {
 		actionUri.append(getNamespace()).append(slash);
 		actionUri.append(getActionName()).append(slash);
 		actionUri.append(getUriTemplate()).append(slash);
-		
+
 		// wrap in '/' if necessary
 		if (!(actionUri.charAt(0) == slashChar)) {
 			actionUri.insert(0, slash);
 		}
-		
+
 		// normalize duplicated slashes
-		System.out.println("before: " + actionUri.toString());
-		System.out.println("after: " + actionUri.toString().replaceAll("(\\/)*", slash));
-		System.out.println("-----------------------------");
-		return actionUri.toString().replaceAll("(\\/)*", slash);
+		return actionUri.toString().replaceAll("\\/{2,}", slash);
 	}
 
 }

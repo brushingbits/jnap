@@ -19,8 +19,7 @@
 package org.brushingbits.jnap.struts2.interceptor;
 
 import org.brushingbits.jnap.struts2.MediaTypeManager;
-import org.brushingbits.jnap.struts2.Response;
-import org.brushingbits.jnap.validation.ValidationBean;
+import org.brushingbits.jnap.web.Response;
 
 import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.inject.Inject;
@@ -40,7 +39,6 @@ public class ExceptionHandlerInterceptor extends ExceptionMappingInterceptor {
 		this.mediaTypeManager = mediaTypeManager;
 	}
 
-	
 	/* (non-Javadoc)
 	 * @see com.opensymphony.xwork2.interceptor.ExceptionMappingInterceptor#intercept(com.opensymphony.xwork2.ActionInvocation)
 	 */
@@ -49,9 +47,8 @@ public class ExceptionHandlerInterceptor extends ExceptionMappingInterceptor {
 		String result = super.intercept(invocation);
 		Object topObject = invocation.getStack().peek();
 		if (topObject != null && topObject instanceof ExceptionHolder) {
-			ValidationBean bean = new ValidationBean();
-			bean.setException(((ExceptionHolder) topObject).getException());
-			result = mediaTypeManager.handle(Response.invalid(result, bean));
+			result = mediaTypeManager.handle(Response.exception(result,
+					((ExceptionHolder) topObject).getException()));
 		}
 		return result;
 	}

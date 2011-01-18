@@ -23,7 +23,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.struts2.StrutsConstants;
-import org.brushingbits.jnap.struts2.Response;
+import org.brushingbits.jnap.web.Response;
 
 import com.opensymphony.xwork2.inject.Inject;
 

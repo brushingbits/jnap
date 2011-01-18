@@ -18,6 +18,8 @@
  */
 package org.brushingbits.jnap.struts2.interceptor;
 
+import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.struts2.ServletActionContext;
@@ -27,19 +29,17 @@ import com.opensymphony.xwork2.ActionInvocation;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
 
 /**
- * @author Daniel
- *
+ * @author Daniel Rochetti
+ * @since 1.0
  */
 public class AuditInfoInterceptor extends AbstractInterceptor {
 
-	/* (non-Javadoc)
-	 * @see com.opensymphony.xwork2.interceptor.AbstractInterceptor#intercept(com.opensymphony.xwork2.ActionInvocation)
-	 */
 	@Override
 	public String intercept(ActionInvocation invocation) throws Exception {
 		HttpServletRequest req = ServletActionContext.getRequest();
 		AuditInfoHolder.setUser(req.getRemoteUser());
 		AuditInfoHolder.setIp(req.getRemoteAddr());
+		AuditInfoHolder.setWhen(new Date());
 		return invocation.invoke();
 	}
 

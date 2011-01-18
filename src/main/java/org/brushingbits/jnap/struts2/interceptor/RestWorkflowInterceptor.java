@@ -18,15 +18,15 @@
  */
 package org.brushingbits.jnap.struts2.interceptor;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.brushingbits.jnap.struts2.MediaTypeManager;
-import org.brushingbits.jnap.struts2.Response;
 import org.brushingbits.jnap.validation.ValidationBean;
+import org.brushingbits.jnap.web.Response;
+import org.springframework.util.ReflectionUtils;
 
 import com.opensymphony.xwork2.Action;
 import com.opensymphony.xwork2.ActionContext;
@@ -52,21 +52,17 @@ public class RestWorkflowInterceptor extends DefaultWorkflowInterceptor {
 
 	@Override
 	protected String doIntercept(ActionInvocation invocation) throws Exception {
-		
 		Object action = invocation.getAction();
 		if (action instanceof ValidationAware) {
 			ValidationAware validationAware = (ValidationAware) action;
 			if (validationAware.hasErrors()) {
-
 				String resultName = findResultName(invocation, action);
-
 				ValidationBean validationEntity = new ValidationBean(
 						validationAware.getActionErrors(),
 						validationAware.getActionMessages(),
 						validationAware.getFieldErrors());
-                
-                Response response = Response.invalid(resultName, validationEntity);
-                return mediaTypeManager.handle(response);
+				Response response = Response.invalid(resultName, validationEntity);
+				return mediaTypeManager.handle(response);
 			}
 		}
 		return invocation.invoke();
@@ -75,29 +71,28 @@ public class RestWorkflowInterceptor extends DefaultWorkflowInterceptor {
 	/**
 	 * @param invocation
 	 * @param action
-	 * @throws NoSuchMethodException
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
 	 */
-	protected String findResultName(ActionInvocation invocation, Object action)
-			throws NoSuchMethodException, IllegalAccessException,
-			InvocationTargetException {
+	protected String findResultName(ActionInvocation invocation, Object action) {
 		String resultName = Action.INPUT;
-		Map<String, Object> session = ActionContext.getContext().getSession();
-		Method method = action.getClass().getMethod(invocation.getProxy().getMethod(),
-				ArrayUtils.EMPTY_CLASS_ARRAY);
-		if (action instanceof ValidationWorkflowAware) {
-		    resultName = ((ValidationWorkflowAware) action).getInputResultName();
-		} else if (method.isAnnotationPresent(InputConfig.class)) {
-			InputConfig annotation = method.getAnnotation(InputConfig.class);
-		    if (StringUtils.isNotBlank(annotation.methodName())) {
-		        Method inputMethod = action.getClass().getMethod(annotation.methodName());
-		        resultName = (String) inputMethod.invoke(action);
-		    } else {
-		        resultName = annotation.resultName();
-		    }
-		} else if (session.containsKey(InputResultInterceptor.INPUT_RESULT_NAME)) {
-			resultName = (String) session.get(InputResultInterceptor.INPUT_RESULT_NAME);
+		try {
+			Map<String, Object> session = ActionContext.getContext().getSession();
+			Method method = action.getClass().getMethod(
+					invocation.getProxy().getMethod(), ArrayUtils.EMPTY_CLASS_ARRAY);
+			if (action instanceof ValidationWorkflowAware) {
+				resultName = ((ValidationWorkflowAware) action).getInputResultName();
+			} else if (method.isAnnotationPresent(InputConfig.class)) {
+				InputConfig annotation = method.getAnnotation(InputConfig.class);
+				if (StringUtils.isNotBlank(annotation.methodName())) {
+					Method inputMethod = action.getClass().getMethod(annotation.methodName());
+					resultName = (String) inputMethod.invoke(action);
+				} else {
+					resultName = annotation.resultName();
+				}
+			} else if (session.containsKey(InputResultInterceptor.INPUT_RESULT_NAME)) {
+				resultName = (String) session.get(InputResultInterceptor.INPUT_RESULT_NAME);
+			}
+		} catch (Exception e) {
+			ReflectionUtils.handleReflectionException(e);
 		}
 		return resultName;
 	}

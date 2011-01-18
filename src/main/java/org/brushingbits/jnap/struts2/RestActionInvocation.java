@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.brushingbits.jnap.web.Response;
 
 import com.opensymphony.xwork2.DefaultActionInvocation;
 import com.opensymphony.xwork2.ModelDriven;
