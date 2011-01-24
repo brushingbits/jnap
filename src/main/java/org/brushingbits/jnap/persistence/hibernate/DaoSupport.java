@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.brushingbits.jnap.bean.model.LogicalDelete;
 import org.brushingbits.jnap.bean.model.PersistentModel;
 import org.brushingbits.jnap.bean.paging.PagingDataHolder;
@@ -35,23 +36,100 @@ import org.hibernate.Query;
 import org.hibernate.QueryException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Example;
 import org.hibernate.criterion.Order;
 import org.hibernate.hql.ast.QuerySyntaxException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
+ * <p>A base class for Hibernate powered data access objects (Dao).</p>
+ * <p>Requires a {@link org.hibernate.SessionFactory} to be set. If only one is available on
+ * the {@link org.springframework.context.ApplicationContext} it will be autowired. If you
+ * have more than {@code SessionFactory} then override the {@link #setSessionFactory(SessionFactory)}
+ * to inject the proper factory for each {@code Dao} implementation.</p>
  * 
  * @author Daniel Rochetti
  * @since 1.0
  *
- * @param <E>
+ * @param <E> the {@code Entity} type handled by this {@code Dao}. It must implements {@link PersistentModel}.
  */
 public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 
 	protected SessionFactory sessionFactory;
-	protected boolean defaultPaging = false;
+	protected boolean defaultPaging = true;
 	protected Order defaultOrder;
+
+	@Autowired
+	protected void setSessionFactory(SessionFactory sessionFactory) {
+		this.sessionFactory = sessionFactory;
+	}
+
+	public void delete(E entity) {
+		if (entity instanceof LogicalDelete) {
+			((LogicalDelete) entity).delete();
+			update(entity);
+		} else {
+			if (StringUtils.isNotBlank(getEntityName())) {
+				getSession().delete(getEntityName(), entity);
+			} else {
+				getSession().delete(entity);
+			}
+		}
+	}
+	
+	public void delete(List<E> entities) {
+		if (entities != null && !entities.isEmpty()) {
+			for (E entity : entities) {
+				delete(entity);
+			}
+		}
+	}
+
+	public List<E> findAll() {
+		StringBuilder hql = new StringBuilder("from " + resolveEntityName());
+		if (getDefaultOrder() != null) {
+			hql.append(" order by ").append(getDefaultOrder().toString());
+		}
+		return find(hql.toString());
+	}
+
+	public List<E> findByExample(E example) {
+		Criteria criteria = createCriteria();
+		criteria.add(Example.create(example).ignoreCase());
+		if (getDefaultOrder() != null) {
+			criteria.addOrder(getDefaultOrder());
+		}
+		return findByCriteria(criteria);
+	}
+
+	public E findById(Serializable id) {
+		E result = null;
+		if (StringUtils.isNotBlank(getEntityName())) {
+			result = (E) getSession().load(getEntityName(), id);
+		} else {
+			result = (E) getSession().load(getEntityClass(), id);
+		}
+		return result;
+	}
+
+	public E getById(Serializable id) {
+		E result = null;
+		if (StringUtils.isNotBlank(getEntityName())) {
+			result = (E) getSession().get(getEntityName(), id);
+		} else {
+			result = (E) getSession().get(getEntityClass(), id);
+		}
+		return result;
+	}
+
+	public void update(E entity) {
+		if (StringUtils.isNotBlank(getEntityName())) {
+			getSession().update(getEntityName(), entity);
+		} else {
+			getSession().update(entity);
+		}
+	}
 
 	protected Integer count(Query query) {
 		if (!query.getQueryString().toLowerCase().startsWith("select count(")) {
@@ -64,54 +142,21 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 
 	protected Integer count(String hql, Object... params) {
 		Query query = getSession().createQuery(hql);
-		setIndexedParameters(query, params);
+		QueryUtils.setIndexedParameters(query, params);
+		return count(query);
+	}
+	
+	protected Integer count(String hql, Map<String, ?> params) {
+		Query query = getSession().createQuery(hql);
+		QueryUtils.setNamedParameters(query, params);
 		return count(query);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#delete(org.brushingbits.jnap.bean.model.PersistentModel)
-	 */
-	public void delete(E entity) {
-		if (entity instanceof LogicalDelete) {
-			((LogicalDelete) entity).delete();
-			update(entity);
-		} else {
-			getSession().delete(resolveEntityName(), entity);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#delete(java.util.List)
-	 */
-	public void delete(List<E> entities) {
-		if (entities != null && !entities.isEmpty()) {
-			for (E entity : entities) {
-				delete(entity);
-			}
-		}
-	}
-
-	protected void doPaging(Criteria criteria) {
-		setupPaging(new CriteriaPagingSetup(criteria));
-	}
-
-	protected void doPaging(Query query) {
-		setupPaging(new QueryPagingSetup(query));
-	}
-
 	private List<E> doQuery(String hql, boolean paging, Object params) {
-
 		Query query = getSession().createQuery(hql);
-		if (params != null) {
-			// testing if the query is using 'Named Parameters' or 'Indexed Parameters'
-			if (params.getClass().isArray()) {
-				setIndexedParameters(query, (Object[]) params);
-			} else if (params.getClass().isAssignableFrom(Map.class)) {
-				setNamedParameters(query, (Map<String, ?>) params);
-			}
-		}
-		if (paging) {
-			doPaging(query);
+		QueryUtils.setParameters(query, params);
+		if (paging && PagingDataHolder.isPagingSet()) {
+			doPaging(query, params);
 		}
 		return query.list();
 	}
@@ -144,33 +189,28 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return find(hql, this.defaultPaging, params);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#findAll()
+	/**
+	 * @return
 	 */
-	public List<E> findAll() {
-		StringBuilder hql = new StringBuilder("from " + resolveEntityName());
-		if (getDefaultOrder() != null) {
-			hql.append(" order by ").append(getDefaultOrder().toString());
+	protected Criteria createCriteria() {
+		Criteria criteria = null;
+		if (StringUtils.isNotBlank(getEntityName())) {
+			criteria = getSession().createCriteria(getEntityName());
+		} else {
+			criteria = getSession().createCriteria(getEntityClass());
 		}
-		return find(hql.toString());
+		return criteria;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#findByExample(org.brushingbits.jnap.bean.model.PersistentModel)
-	 */
-	public List<E> findByExample(E example) {
-		Criteria criteria = getSession().createCriteria(resolveEntityName());
-		if (getDefaultOrder() != null) {
-			criteria.addOrder(getDefaultOrder());
+	protected List<E> findByCriteria(Criteria criteria) {
+		return findByCriteria(criteria, this.defaultPaging);
+	}
+
+	protected List<E> findByCriteria(Criteria criteria, boolean paging) {
+		if (paging && PagingDataHolder.isPagingSet()) {
+			doPaging(criteria);
 		}
 		return criteria.list();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#findById(java.io.Serializable)
-	 */
-	public E findById(Serializable id) {
-		return (E) getSession().load(resolveEntityName(), id);
 	}
 
 	/**
@@ -186,11 +226,6 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 
 	public E findUniqueByExample(E example) {
 		return handleUniqueResult(findByExample(example));
-	}
-
-	
-	public E getById(Serializable id) {
-		return (E) getSession().get(resolveEntityName(), id);
 	}
 
 	/**
@@ -217,6 +252,12 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return null;
 	}
 
+	/**
+	 * Gets the current session.
+	 * 
+	 * @return the current Hibernate {@link Session}.
+	 * @see SessionFactory#getCurrentSession()
+	 */
 	protected Session getSession() {
 		return sessionFactory.getCurrentSession();
 	}
@@ -237,7 +278,11 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 	 * @see org.brushingbits.jnap.persistence.Dao#insert(org.brushingbits.jnap.bean.model.PersistentModel)
 	 */
 	public void insert(E entity) {
-		getSession().save(resolveEntityName(), entity);
+		if (StringUtils.isNotBlank(getEntityName())) {
+			getSession().save(getEntityName(), entity);
+		} else {
+			getSession().save(entity);
+		}
 	}
 
 	/**
@@ -248,48 +293,45 @@ public abstract class DaoSupport<E extends PersistentModel> implements Dao<E> {
 		return getEntityName() != null ? getEntityName() : getEntityClass().getSimpleName();
 	}
 
-	/**
-	 * 
-	 * @param query
-	 * @param params
-	 */
-	protected void setIndexedParameters(Query query, Object[] params) {
-		if (params != null && params.length > 0) {
-			for (int i = 0; i < params.length; i++) {
-				query.setParameter(i, params[i]);
-			}
-		}
+	protected String addSurroundingLikeChar(String param) {
+		return "%" + param + "%";
+	}
+
+	protected String addLeadingLikeChar(String param) {
+		return "%" + param;
+	}
+	
+	protected String addTrailingLikeChar(String param) {
+		return param + "%";
 	}
 
 	/**
-	 * 
-	 * @param query
-	 * @param params
+	 * Setup paging for the {@link Criteria}.
+	 * @param criteria
 	 */
-	protected void setNamedParameters(Query query, Map<String, ?> params) {
-		if (params != null && !params.isEmpty()) {
-			for (String name : params.keySet()) {
-				query.setParameter(name, params.get(name));
-			}
-		}
+	protected void doPaging(Criteria criteria) {
+		setupPaging(new CriteriaPagingSetup(criteria));
 	}
 
-	@Autowired
-	protected void setSessionFactory(SessionFactory sessionFactory) {
-		this.sessionFactory = sessionFactory;
+	/**
+	 * Setup paging for the {@link Query}.
+	 * @param query
+	 * @param queryParams
+	 */
+	protected void doPaging(Query query, Object queryParams) {
+		setupPaging(new QueryPagingSetup(query, getSession(), queryParams));
 	}
 
-	private void setupPaging(PagingSetup pagingSetup) {
-		pagingSetup.setFirstResult(PagingDataHolder.getCurrentPage());
-		pagingSetup.setResultsPerPage(PagingDataHolder.getResultsPerPage());
+	/**
+	 * 
+	 * @param pagingSetup
+	 */
+	protected void setupPaging(PagingSetup pagingSetup) {
 		PagingDataHolder.setTotal(pagingSetup.countTotal());
-	}
-
-	/* (non-Javadoc)
-	 * @see org.brushingbits.jnap.persistence.Dao#update(org.brushingbits.jnap.bean.model.PersistentModel)
-	 */
-	public void update(E entity) {
-		getSession().update(resolveEntityName(), entity);
+		final int resultsPerPage = PagingDataHolder.getResultsPerPage();
+		int first = (PagingDataHolder.getCurrentPage() - 1) * resultsPerPage;
+		pagingSetup.setFirstResult(first);
+		pagingSetup.setResultsPerPage(resultsPerPage);
 	}
 
 }

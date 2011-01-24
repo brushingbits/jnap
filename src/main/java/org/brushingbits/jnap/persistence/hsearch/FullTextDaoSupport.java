@@ -32,6 +32,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.brushingbits.jnap.bean.model.IndexedModel;
+import org.brushingbits.jnap.bean.paging.PagingDataHolder;
 import org.brushingbits.jnap.persistence.FullTextDao;
 import org.brushingbits.jnap.persistence.hibernate.DaoSupport;
 import org.brushingbits.jnap.util.ReflectionUtils;
@@ -44,6 +45,7 @@ import org.springframework.beans.BeanUtils;
 /**
  * 
  * @author Daniel Rochetti
+ * @since 1.0
  * 
  * @param <E>
  * @see IndexedModel
@@ -139,8 +141,14 @@ public abstract class FullTextDaoSupport<E extends IndexedModel> extends
 	protected List<E> search(String queryString, boolean limitEntityType, boolean leadingWildcard) {
 		Query query = createLuceneQuery(queryString, limitEntityType, leadingWildcard);
 		FullTextQuery fullTextQuery = getFullTextSession().createFullTextQuery(query, getEntityClass());
-		doPaging(fullTextQuery);
+		if (PagingDataHolder.isPagingSet()) {
+			doPaging(fullTextQuery);
+		}
 		return fullTextQuery.list();
+	}
+
+	protected void doPaging(FullTextQuery fullTextQuery) {
+		setupPaging(new FullTextQueryPagingSetup(fullTextQuery));
 	}
 
 	protected Query createLuceneQuery(String queryString, boolean limitEntityType, boolean leadingWildcard) {
