@@ -1,5 +1,5 @@
 /*
- * QueryPagingSetup.java created on 2010-06-06
+ * FullTextQueryPagingSetup.java created on 2011-01-23
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org
@@ -16,46 +16,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.brushingbits.jnap.persistence.hibernate;
+package org.brushingbits.jnap.persistence.hsearch;
 
 import org.brushingbits.jnap.bean.paging.PagingSetup;
-import org.hibernate.Criteria;
-import org.hibernate.criterion.Projections;
-
+import org.hibernate.search.FullTextQuery;
 
 /**
- * A {@link PagingSetup} adapter for {@link Criteria} queries.
+ * A {@link PagingSetup} adapter for {@code full text (e.g. Lucene)} queries.
  * 
  * @author Daniel Rochetti
  * @since 1.0
  */
-public class CriteriaPagingSetup implements PagingSetup {
+public class FullTextQueryPagingSetup implements PagingSetup {
 
-	private Criteria criteria;
+	private FullTextQuery fullTextQuery;
 
-	public CriteriaPagingSetup(Criteria criteria) {
-		this.criteria = criteria;
+	public FullTextQueryPagingSetup(FullTextQuery fullTextQuery) {
+		this.fullTextQuery = fullTextQuery;
 	}
 
 	public void setFirstResult(int first) {
-		this.criteria.setFirstResult(first);
+		this.fullTextQuery.setFirstResult(first);
 	}
 
 	public void setResultsPerPage(int max) {
-		this.criteria.setMaxResults(max);
-
+		this.fullTextQuery.setMaxResults(max);
 	}
 
 	public int countTotal() {
-		// set the count() projection
-		criteria.setProjection(Projections.rowCount());
-		int total = (Integer) criteria.uniqueResult();
-
-		// reset criteria
-		criteria.setProjection(null);
-		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
-		
-		return total;
+		return this.fullTextQuery.getResultSize();
 	}
 
 }

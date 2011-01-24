@@ -18,22 +18,35 @@
  */
 package org.brushingbits.jnap.persistence.hibernate;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang.StringUtils;
 import org.brushingbits.jnap.bean.paging.PagingSetup;
 import org.hibernate.Query;
-import org.hibernate.ScrollMode;
-import org.hibernate.ScrollableResults;
+import org.hibernate.Session;
 
 
 /**
+ * A {@link PagingSetup} adapter for {@code HQL} queries.
+ * 
  * @author Daniel Rochetti
- *
+ * @since 1.0
  */
 public class QueryPagingSetup implements PagingSetup {
 
-	private Query query;
+	private static final Pattern ORDER_BY_REMOVE_REGEXP = Pattern.compile(
+			"(order[\\s]*by[\\s]*)([\\w]{1,}[\\s]*)(asc|desc)?",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
-	public QueryPagingSetup(Query query) {
+	private Query query;
+	private Session currentSession;
+	private Object queryParams;
+
+	public QueryPagingSetup(Query query, Session currentSession, Object queryParams) {
 		this.query = query;
+		this.currentSession = currentSession;
+		this.queryParams = queryParams;
 	}
 
 	public void setFirstResult(int first) {
@@ -42,15 +55,20 @@ public class QueryPagingSetup implements PagingSetup {
 
 	public void setResultsPerPage(int max) {
 		this.query.setMaxResults(max);
-
 	}
 
 	public int countTotal() {
-		ScrollableResults cursor = query.scroll(ScrollMode.FORWARD_ONLY);
-		cursor.last();
-		int total = cursor.getRowNumber() + 1;
-		cursor.close();
-		return total;
+		String countHql = query.getQueryString();
+		int indexOfFromClause = countHql.toLowerCase().indexOf("from");
+		countHql = countHql.substring(indexOfFromClause, countHql.length());
+		countHql = "select count(*) " + countHql;
+		// remove 'order by' clauses if present
+		Matcher orderByMatcher = ORDER_BY_REMOVE_REGEXP.matcher(countHql);
+		countHql = orderByMatcher.replaceAll(StringUtils.EMPTY);
+
+		Query countQuery = this.currentSession.createQuery(countHql);
+		QueryUtils.setParameters(countQuery, this.queryParams);
+		return ((Number) countQuery.uniqueResult()).intValue();
 	}
 
 }
