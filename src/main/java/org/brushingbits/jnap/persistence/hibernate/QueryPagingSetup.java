@@ -18,6 +18,7 @@
  */
 package org.brushingbits.jnap.persistence.hibernate;
 
+import java.text.MessageFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,15 +29,24 @@ import org.hibernate.Session;
 
 
 /**
- * A {@link PagingSetup} adapter for {@code HQL} queries.
+ * <p>A {@link PagingSetup} adapter for {@code HQL} queries.</p>
+ * 
+ * <p>ps: Many thanks to <a href="mailto:antonio.chaul@gmail.com">Antonio Chaul</a> for his 
+ * contribution on the {@link #ORDER_BY_REMOVE_REGEXP}. I was about to give up when he came up
+ * with the working regular expression, now I owe him a beer.</p>
  * 
  * @author Daniel Rochetti
  * @since 1.0
  */
 public class QueryPagingSetup implements PagingSetup {
 
-	private static final Pattern ORDER_BY_REMOVE_REGEXP = Pattern.compile(
-			"(order[\\s]*by[\\s]*)([\\w]{1,}[\\s]*)(asc|desc)?",
+	private static final String REG_EXP_SQL_IDENTIFIER = "[\\w\\d\\.\\(\\)]";
+
+	private static final String REG_EXP_SQL_ORDER_DIRECTION = "(?:asc|desc)";
+
+	private static final Pattern ORDER_BY_REMOVE_REGEXP = Pattern.compile(MessageFormat.format(
+			"(?:order[\\s]*by)(?:[\\s]*{0}+[\\s]*{1}?[\\s]*)(?:,[\\s]*{0}+[\\s]*{1}?[\\s]*)*",
+			REG_EXP_SQL_IDENTIFIER, REG_EXP_SQL_ORDER_DIRECTION),
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	private Query query;
@@ -58,10 +68,12 @@ public class QueryPagingSetup implements PagingSetup {
 	}
 
 	public int countTotal() {
+		// build the count query
 		String countHql = query.getQueryString();
 		int indexOfFromClause = countHql.toLowerCase().indexOf("from");
 		countHql = countHql.substring(indexOfFromClause, countHql.length());
 		countHql = "select count(*) " + countHql;
+
 		// remove 'order by' clauses if present
 		Matcher orderByMatcher = ORDER_BY_REMOVE_REGEXP.matcher(countHql);
 		countHql = orderByMatcher.replaceAll(StringUtils.EMPTY);
