@@ -1,5 +1,5 @@
 /*
- * RestControllerSupport.java created on 19/03/2010
+ * RestControllerSupport.java created on 2010-03-19
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org
@@ -23,6 +23,7 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.brushingbits.jnap.bean.model.Model;
+import org.brushingbits.jnap.bean.paging.PagingDataHolder;
 import org.brushingbits.jnap.util.ReflectionUtils;
 
 import com.opensymphony.xwork2.ActionSupport;
@@ -89,47 +90,32 @@ public class RestControllerSupport<M extends Model> extends ActionSupport {
 		this.model = model;
 	}
 
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>searchModel</code>.
-	 */
 	public M getSearchModel() {
 		return searchModel;
 	}
 
-	/**
-	 * <code>Mutator</code> ("setter") method for property <code>searchModel</code>.
-	 */
 	public void setSearchModel(M searchModel) {
 		this.searchModel = searchModel;
 	}
 
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>modelList</code>.
-	 */
 	public List<M> getModelList() {
 		return modelList;
 	}
 
-	/**
-	 * <code>Mutator</code> ("setter") method for property <code>modelList</code>.
-	 */
 	public void setModelList(List<M> result) {
 		this.modelList = result;
 	}
 
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>successMessage</code>.
-	 */
 	public String getSuccessMessage() {
 		return successMessage;
 	}
 
-	/**
-	 * <code>Mutator</code> ("setter") method for property <code>successMessage</code>.
-	 */
 	public void setSuccessMessage(String successMessage) {
 		this.successMessage = getText(successMessage);
 	}
 
-	
+	public PagingDataHolder.PagingData getPagingData() {
+		return PagingDataHolder.PagingData.getCurrent();
+	}
+
 }
