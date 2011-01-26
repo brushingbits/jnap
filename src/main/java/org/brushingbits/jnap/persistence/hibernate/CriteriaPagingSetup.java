@@ -43,7 +43,6 @@ public class CriteriaPagingSetup implements PagingSetup {
 
 	public void setResultsPerPage(int max) {
 		this.criteria.setMaxResults(max);
-
 	}
 
 	public int countTotal() {

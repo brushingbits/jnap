@@ -44,10 +44,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * <p>A base class for Hibernate powered data access objects (Dao).</p>
+ * 
  * <p>Requires a {@link org.hibernate.SessionFactory} to be set. If only one is available on
  * the {@link org.springframework.context.ApplicationContext} it will be autowired. If you
- * have more than {@code SessionFactory} then override the {@link #setSessionFactory(SessionFactory)}
- * to inject the proper factory for each {@code Dao} implementation.</p>
+ * have more than one {@code SessionFactory} then you should override the
+ * {@link #setSessionFactory(SessionFactory)} to inject the proper factory for each 
+ * {@code Dao} implementation or you can set it via Spring XML.</p>
  * 
  * @author Daniel Rochetti
  * @since 1.0
