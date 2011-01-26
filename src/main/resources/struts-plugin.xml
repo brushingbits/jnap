@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+	<!-- REST configuration beans -->
+	<bean type="org.apache.struts2.convention.ActionConfigBuilder" name="jnap"
+		class="org.brushingbits.jnap.struts2.config.RestControllerConfigBuilder" />
+	<bean type="org.apache.struts2.dispatcher.mapper.ActionMapper" name="jnap"
+		class="org.brushingbits.jnap.struts2.mapper.RestActionMapper" />
+	<bean type="com.opensymphony.xwork2.ActionProxyFactory" name="jnap"
+		class="org.brushingbits.jnap.struts2.RestActionProxyFactory" />
+
+	<!-- ObjectFactory based on Spring -->
+	<bean type="com.opensymphony.xwork2.ObjectFactory" name="jnap"
+		class="org.brushingbits.jnap.struts2.impl.SpringObjectFactory" />
+
+	<!-- MediaType handling -->
+	<bean type="org.brushingbits.jnap.struts2.MediaTypeManager" class="org.brushingbits.jnap.struts2.MediaTypeManager" />
+	<bean name="defaultMediaTypeHandler" type="org.brushingbits.jnap.struts2.MediaTypeHandler"
+		class="org.brushingbits.jnap.struts2.handler.DefaultMediaTypeHandler" />
+	<bean name="jsonMediaTypeHandler" type="org.brushingbits.jnap.struts2.MediaTypeHandler"
+		class="org.brushingbits.jnap.struts2.handler.JsonMediaTypeHandler" />
+	<bean name="xmlMediaTypeHandler" type="org.brushingbits.jnap.struts2.MediaTypeHandler"
+		class="org.brushingbits.jnap.struts2.handler.XmlMediaTypeHandler" />
+
+	<!-- Constants configuration -->
+	<constant name="struts.action.extension" value="xhtml,,xml,json,rss" />
+	<constant name="struts.actionProxyFactory" value="jnap" />
+	<constant name="struts.objectFactory" value="jnap" />
+	<constant name="struts.mapper.class" value="jnap" />
+	<constant name="struts.convention.actionConfigBuilder" value="jnap" />
+	<constant name="struts.convention.action.eagerLoading" value="false" />
+	<constant name="struts.convention.action.suffix" value="Controller" />
+	<constant name="struts.convention.result.flatLayout" value="true" />
+	<constant name="struts.convention.default.parent.package" value="jnap-default" />
+	<!-- Paging constants configuration -->
+	<constant name="struts.jnap.paging.startParamName" value="start" />
+	<constant name="struts.jnap.paging.limitParamName" value="limit" />
+
+	<package name="jnap-default" extends="struts-default">
+
+		<interceptors>
+
+			<interceptor name="inputResult" class="org.brushingbits.jnap.struts2.interceptor.InputResultInterceptor" />
+			<interceptor name="exceptionHandler" class="org.brushingbits.jnap.struts2.interceptor.ExceptionHandlerInterceptor" />
+			<interceptor name="pagingSetup" class="org.brushingbits.jnap.struts2.interceptor.PagingSetupInterceptor" />
+			<interceptor name="auditInfo" class="org.brushingbits.jnap.struts2.interceptor.AuditInfoInterceptor" />
+			<interceptor name="mediaTypeConsumer" class="org.brushingbits.jnap.struts2.interceptor.MediaTypeConsumerInterceptor" />
+			<interceptor name="jsr303Validation" class="org.brushingbits.jnap.struts2.interceptor.ValidationInterceptor" />
+			<interceptor name="restWorkflow" class="org.brushingbits.jnap.struts2.interceptor.RestWorkflowInterceptor" />
+
+			<interceptor-stack name="jnapDefaultStack">
+				<interceptor-ref name="inputResult" />
+				<interceptor-ref name="exceptionHandler" />
+				<interceptor-ref name="alias" />
+				<interceptor-ref name="servletConfig" />
+				<interceptor-ref name="i18n" />
+				<interceptor-ref name="prepare" />
+				<interceptor-ref name="chain" />
+				<interceptor-ref name="debugging" />
+				<interceptor-ref name="profiling" />
+				<interceptor-ref name="scopedModelDriven" />
+				<interceptor-ref name="modelDriven" />
+				<interceptor-ref name="fileUpload" />
+				<interceptor-ref name="checkbox" />
+<!--				<interceptor-ref name="staticParams" />-->
+				<interceptor-ref name="params">
+					<param name="excludeParams">jnap\..*,^struts\..*,_http_method</param>
+				</interceptor-ref>
+				<interceptor-ref name="actionMappingParams" />
+				<interceptor-ref name="mediaTypeConsumer" />
+				<interceptor-ref name="conversionError" />
+				<interceptor-ref name="jsr303Validation" />
+				<interceptor-ref name="pagingSetup" />
+				<interceptor-ref name="auditInfo" />
+				<interceptor-ref name="restWorkflow" />
+			</interceptor-stack>
+		</interceptors>
+
+		<default-interceptor-ref name="jnapDefaultStack" />
+
+		<global-results>
+			<result name="app-exception">/app-exception.jsp</result>
+		</global-results>
+
+		<global-exception-mappings>
+			<exception-mapping exception="org.brushingbits.jnap.exception.ApplicationException" result="app-exception" />
+			<exception-mapping exception="org.springframework.dao.DataAccessException" result="db-exception" />
+			<exception-mapping exception="java.sql.SQLException" result="db-exception" />
+			<exception-mapping exception="java.lang.Exception" result="exception" />
+		</global-exception-mappings>
+
+	</package>
+
+</struts>
