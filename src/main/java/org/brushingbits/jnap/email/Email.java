@@ -19,6 +19,7 @@
 package org.brushingbits.jnap.email;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -66,7 +67,6 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 	}
 
 	public void prepare(MimeMessage mimeMessage) throws Exception {
-		validate();
 		final EmailAccountInfo acc = getAccountInfo();
 		boolean multipart = StringUtils.isNotBlank(getHtmlText())
 				|| (getInlineResources() != null && getInlineResources().size() > 0)
@@ -120,10 +120,6 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 		}
 	}
 
-	protected void validate() {
-		
-	}
-
 	/**
 	 * Simple RegEx replace used to remove all HTML tags.
 	 * 
@@ -137,7 +133,7 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 	public EmailAccountInfo getAccountInfo() {
 		return accountInfo;
 	}
-	
+
 	public void setAccountInfo(EmailAccountInfo accountInfo) {
 		this.accountInfo = accountInfo;
 	}
@@ -174,8 +170,22 @@ public class Email extends SimpleMailMessage implements MimeMessagePreparator {
 		return attachments;
 	}
 
+	public void addInline(String cid, Resource inlineData) {
+		if (this.inlineResources == null) {
+			this.inlineResources = new HashMap<String, Resource>();
+		}
+		this.inlineResources.put(cid, inlineData);
+	}
+
 	public void setAttachments(Map<String, Resource> attachments) {
 		this.attachments = attachments;
+	}
+
+	public void addAttachment(String name, Resource attachment) {
+		if (this.attachments == null) {
+			this.attachments = new HashMap<String, Resource>();
+		}
+		this.attachments.put(name, attachment);
 	}
 
 	public boolean isMixedContent() {

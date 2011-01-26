@@ -26,14 +26,16 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 
@@ -41,7 +43,8 @@ import org.springframework.util.Assert;
  * @author Daniel Rochetti
  * @since 1.0
  */
-public class EmailSender implements InitializingBean, DisposableBean, Runnable {
+@Component
+public class EmailSender implements Runnable {
 
 	private static Log logger = LogFactory.getLog(EmailSender.class);
 
@@ -71,6 +74,7 @@ public class EmailSender implements InitializingBean, DisposableBean, Runnable {
 		this.mailSenderMap = Collections.synchronizedMap(new HashMap<EmailAccountInfo, JavaMailSenderImpl>());
 	}
 
+	@PostConstruct
 	public void afterPropertiesSet() throws Exception {
 		Assert.notNull(this.defaultEmailAccount, "You must provide a default email account configuration.");
 		this.defaultMailSender.setJavaMailProperties(this.defaultEmailAccount.getJavaMailProperties());
@@ -84,6 +88,7 @@ public class EmailSender implements InitializingBean, DisposableBean, Runnable {
 		this.scheduledAsyncSender = this.taskScheduler.scheduleWithFixedDelay(this, this.asyncSendInterval);
 	}
 
+	@PreDestroy
 	public void destroy() throws Exception {
 		this.scheduledAsyncSender.cancel(false);
 		this.taskScheduler.destroy();

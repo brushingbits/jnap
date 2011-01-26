@@ -21,8 +21,6 @@ package org.brushingbits.jnap.email;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.mail.internet.MimeMessage;
-
 
 /**
  * @author Daniel Rochetti
@@ -55,12 +53,6 @@ public abstract class TemplateEmail extends Email {
 	 * 
 	 */
 	protected abstract void processTemplate();
-
-	@Override
-	public void prepare(MimeMessage mimeMessage) throws Exception {
-		this.processTemplate();
-		super.prepare(mimeMessage);
-	}
 
 	public String getHeaderTemplateName() {
 		return headerTemplateName;
