@@ -1,5 +1,5 @@
 /*
- * DynaModel.java created on 2010-03-02
+ * DynaModel.java created on 2010-03-04
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org

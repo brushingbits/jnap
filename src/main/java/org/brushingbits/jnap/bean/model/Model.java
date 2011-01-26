@@ -1,5 +1,5 @@
 /*
- * Model.java created on 03/03/2010
+ * Model.java created on 2010-03-03
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org

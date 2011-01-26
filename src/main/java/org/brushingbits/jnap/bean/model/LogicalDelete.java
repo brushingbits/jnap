@@ -1,5 +1,5 @@
 /*
- * LogicalDelete.java created on 03/03/2010
+ * LogicalDelete.java created on 2010-03-03
  *
  * Created by Brushing Bits Labs
  * http://www.brushingbits.org
@@ -21,6 +21,7 @@ package org.brushingbits.jnap.bean.model;
 /**
  * 
  * @author Daniel Rochetti
+ * @since 1.0
  */
 public interface LogicalDelete {
 
