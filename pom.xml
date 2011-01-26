@@ -3,10 +3,10 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.brushingbits</groupId>
+	<groupId>org.brushingbits.jnap</groupId>
 	<artifactId>jnap</artifactId>
 	<packaging>jar</packaging>
-	<version>0.5.1</version>
+	<version>0.6.0</version>
 	<name>jNap... go REST!</name>
 	<url>http://www.brushingbits.org/projects/jnap</url>
 	<description><![CDATA[TODO]]></description>
@@ -19,10 +19,26 @@
 		</license>
 	</licenses>
 
+	<developers>
+		<developer>
+			<id>drochetti</id>
+			<name>Daniel Rochetti</name>
+			<email>daniel.rochetti@gmail.com</email>
+			<timezone>-3</timezone>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<properties>
+				<gtalk>daniel.rochetti@gmail.com</gtalk>
+			</properties>
+		</developer>
+	</developers>
+
 	<scm>
-		<connection>git://github.com/brushingbits/jnap.git</connection>
-		<developerConnection>git+ssh://git@github.com/brushingbits/jnap.git</developerConnection>
-		<url>http://github.com/brushingbits/jnap</url>
+		<connection>scm:git:git@github.com:brushingbits/jnap.git</connection>
+		<developerConnection>scm:git:git@github.com:brushingbits/jnap.git</developerConnection>
+		<url>git@github.com:brushingbits/jnap.git</url>
 	</scm>
 
 	<issueManagement>
@@ -30,8 +46,17 @@
 		<url>http://github.com/brushingbits/jnap/issues/</url>
 	</issueManagement>
 
+	<distributionManagement>
+		<repository>
+			<id>nexus-releases</id>
+			<name>Nexus Release Repository</name>
+			<url>http://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
 	<build>
 		<plugins>
+			<!-- JavaC plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -40,14 +65,49 @@
 					<target>1.5</target>
 				</configuration>
 			</plugin>
+			<!-- Bundle sources -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Javadoc generator plugin
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+			</plugin>
+			-->
+			<!-- EclipseIDE plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-eclipse-plugin</artifactId>
-				<version>2.8</version>
 			</plugin>
+			<!-- Signing with GPG
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			-->
 		</plugins>
 	</build>
 
+	<!-- Project properties -->
 	<properties>
 		<struts.version>2.2.1.1</struts.version>
 		<tiles.version>2.1.4</tiles.version>
@@ -110,19 +170,16 @@
 			<groupId>org.apache.tiles</groupId>
 			<artifactId>tiles-api</artifactId>
 			<version>${tiles.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tiles</groupId>
 			<artifactId>tiles-core</artifactId>
 			<version>${tiles.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tiles</groupId>
 			<artifactId>tiles-jsp</artifactId>
 			<version>${tiles.version}</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Spring -->
@@ -130,57 +187,36 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-beans</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context-support</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-orm</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-tx</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-web</artifactId>
 			<version>${spring.version}</version>
-			<scope>compile</scope>
-		</dependency>
-
-		<!-- Spring Security -->
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-core</artifactId>
-			<version>${spring.version}</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-taglibs</artifactId>
-			<version>${spring.version}</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- CGLib -->
@@ -188,7 +224,6 @@
 			<groupId>cglib</groupId>
 			<artifactId>cglib</artifactId>
 			<version>2.2</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Java Annotations (JSR250) -->
@@ -196,7 +231,18 @@
 			<groupId>javax.annotation</groupId>
 			<artifactId>jsr250-api</artifactId>
 			<version>1.0</version>
-			<scope>compile</scope>
+		</dependency>
+
+		<!-- JavaMail -->
+		<dependency>
+			<groupId>javax.activation</groupId>
+			<artifactId>activation</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>1.4.4</version>
 		</dependency>
 
 		<!-- Sun Jersey (JAX-RS impl) -->
@@ -204,13 +250,11 @@
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-core</artifactId>
 			<version>${jersey.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
 			<version>${jersey.version}</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Jackson (JSON Des/Serialization) -->
@@ -218,13 +262,11 @@
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-core-asl</artifactId>
 			<version>${jackson.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.jackson</groupId>
 			<artifactId>jackson-mapper-asl</artifactId>
 			<version>${jackson.version}</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- XStream (XML Des/Serialization) -->
@@ -232,7 +274,6 @@
 			<groupId>com.thoughtworks.xstream</groupId>
 			<artifactId>xstream</artifactId>
 			<version>1.3.1</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Rome (Feed Library) -->
@@ -240,7 +281,6 @@
 			<groupId>rome</groupId>
 			<artifactId>rome</artifactId>
 			<version>1.0</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Commons -->
@@ -248,19 +288,11 @@
 			<groupId>commons-lang</groupId>
 			<artifactId>commons-lang</artifactId>
 			<version>2.5</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-beanutils</groupId>
 			<artifactId>commons-beanutils</artifactId>
 			<version>1.8.3</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>commons-email</groupId>
-			<artifactId>commons-email</artifactId>
-			<version>1.1</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- Hibernate -->
@@ -299,13 +331,11 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.5.8</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
 			<version>1.5.8</version>
-			<scope>compile</scope>
 		</dependency>
 
 		<!-- jUnit -->
