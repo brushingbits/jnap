@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response.Status;
 
+import org.brushingbits.jnap.common.bean.visitor.BeanPropertyFilter;
 import org.brushingbits.jnap.validation.ValidationBean;
 
 /**
@@ -61,80 +62,17 @@ public class Response {
 	protected boolean useETag;
 	protected Date lastModified;
 	protected Long expires;
+	protected BeanPropertyFilter propertyFilter;
 
 	// TODO output options
 
 	protected Response(String resultName) {
 		this.resultName = resultName;
+		this.propertyFilter = BeanPropertyFilter.getDefault();
 	}
 
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>entity</code>.
-	 */
-	public Object getEntity() {
-		return entity;
-	}
-
-	/**
-	 * <code>Mutator</code> ("setter") method for property <code>entity</code>.
-	 * Note: this method should be called only within the framework.
-	 */
-	public void setEntity(Object entity) {
-		this.entity = entity;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property
-	 * <code>resultName</code>.
-	 */
-	public String getResultName() {
-		return resultName;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>wrap</code>.
-	 */
-	public String getWrap() {
-		return wrap;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>status</code>.
-	 */
-	public Status getStatus() {
-		return status;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property
-	 * <code>cacheEnabled</code>.
-	 */
-	public boolean isCacheEnabled() {
-		return cacheEnabled;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>useETag</code>
-	 * .
-	 */
-	public boolean isUseETag() {
-		return useETag;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property
-	 * <code>lastModified</code>.
-	 */
-	public Date getLastModified() {
-		return lastModified;
-	}
-
-	/**
-	 * <code>Accessor</code> ("getter") method for property <code>expires</code>
-	 * .
-	 */
-	public Long getExpires() {
-		return expires;
+	public BeanPropertyFilter getPropertyFilter() {
+		return propertyFilter;
 	}
 
 	public static Response ok(String resultName) {
@@ -186,6 +124,16 @@ public class Response {
 		return wrap("responseEntity");
 	}
 
+	public Response propertyFilter(BeanPropertyFilter propertyFilter) {
+		this.propertyFilter = propertyFilter;
+		return this;
+	}
+
+	public Response noPropertyFiltering() {
+		this.propertyFilter = null;
+		return this;
+	}
+
 	/**
 	 * 
 	 * <strong>Note:</strong> this implementation was inspired by the
@@ -226,6 +174,44 @@ public class Response {
 		// TODO other Headers
 
 		res.setStatus(status.getStatusCode());
+	}
+
+	// getters
+
+	public Object getEntity() {
+		return entity;
+	}
+
+	public void setEntity(Object entity) {
+		this.entity = entity;
+	}
+
+	public String getResultName() {
+		return resultName;
+	}
+
+	public String getWrap() {
+		return wrap;
+	}
+
+	public Status getStatus() {
+		return status;
+	}
+
+	public boolean isCacheEnabled() {
+		return cacheEnabled;
+	}
+
+	public boolean isUseETag() {
+		return useETag;
+	}
+
+	public Date getLastModified() {
+		return lastModified;
+	}
+
+	public Long getExpires() {
+		return expires;
 	}
 
 }
