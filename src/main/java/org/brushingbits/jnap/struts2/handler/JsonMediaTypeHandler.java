@@ -38,8 +38,8 @@ public class JsonMediaTypeHandler extends BeanMediaTypeHandler {
 	private static final String[] EXTENSIONS = { "json" };
 
 	private static final MediaType[] MEDIA_TYPES = {
-		MediaType.valueOf("text/javascript"),
-		MediaType.APPLICATION_JSON_TYPE
+		MediaType.APPLICATION_JSON_TYPE,
+		MediaType.valueOf("text/javascript")
 	};
 
 	@Override
@@ -74,7 +74,7 @@ public class JsonMediaTypeHandler extends BeanMediaTypeHandler {
 				if (devMode) {
 					jsonGenerator.useDefaultPrettyPrinter();
 				}
-				jsonGenerator.writeObject(transformResponse(response));
+				jsonGenerator.writeObject(getResponseEntity(response));
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

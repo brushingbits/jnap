@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.struts2.StrutsConstants;
+import org.brushingbits.jnap.common.bean.cloning.BeanCloner;
 import org.brushingbits.jnap.web.Response;
 
 import com.opensymphony.xwork2.inject.Inject;
@@ -40,8 +41,12 @@ public abstract class BeanMediaTypeHandler extends DefaultMediaTypeHandler {
 		this.devMode = Boolean.valueOf(devMode);
 	}
 
-	protected Object transformResponse(Response response) {
+	protected Object getResponseEntity(Response response) {
 		Object obj = response.getEntity();
+		if (response.getPropertyFilter() != null) {
+			BeanCloner cloner = new BeanCloner(response.getPropertyFilter());
+			obj = cloner.clone(obj);
+		}
 		if (StringUtils.isNotBlank(response.getWrap())) {
 			obj = new HashMap<String, Object>();
 			((Map<String, Object>) obj).put(response.getWrap(), response.getEntity());

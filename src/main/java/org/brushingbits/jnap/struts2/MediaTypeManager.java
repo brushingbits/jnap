@@ -89,13 +89,8 @@ public class MediaTypeManager {
 			String responseBody = tempWriter.toString();
 			if (StringUtils.isNotBlank(responseBody)) {
 				try {
-					// TODO encoding?
-//					String encoding = req.getHeader(HttpHeaders.ACCEPT_ENCODING);
-//					res.setHeader(HttpHeaders.CONTENT_ENCODING, encoding);
-					
-					res.setContentType(handler.getDefaultMediaType().toString());
-
 					byte[] content = responseBody.getBytes("utf-8");
+					res.setContentType(handler.getDefaultMediaType().toString());
 					res.setContentLength(content.length);
 					res.getOutputStream().write(content);
 				} catch (IOException ioe) {

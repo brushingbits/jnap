@@ -76,7 +76,7 @@ public class XmlMediaTypeHandler extends BeanMediaTypeHandler {
 			} else {
 				xmlWriter = new CompactWriter(writer);
 			}
-			xstream.marshal(transformResponse(response), xmlWriter);
+			xstream.marshal(getResponseEntity(response), xmlWriter);
 		}
 		return null;
 	}
