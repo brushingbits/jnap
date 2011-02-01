@@ -45,7 +45,7 @@ public class QueryPagingSetup implements PagingSetup {
 	private static final String REG_EXP_SQL_ORDER_DIRECTION = "(?:asc|desc)";
 
 	private static final Pattern ORDER_BY_REMOVE_REGEXP = Pattern.compile(MessageFormat.format(
-			"(?:order[\\s]*by)(?:[\\s]*{0}+[\\s]*{1}?[\\s]*)(?:,[\\s]*{0}+[\\s]*{1}?[\\s]*)*",
+			"(?:order[\\s]+by)(?:[\\s]+{0}+[\\s]+?{1}?[\\s]*)(?:,[\\s]*{0}+[\\s]*{1}?[\\s]*)*",
 			REG_EXP_SQL_IDENTIFIER, REG_EXP_SQL_ORDER_DIRECTION),
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 

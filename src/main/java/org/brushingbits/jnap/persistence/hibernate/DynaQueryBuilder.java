@@ -49,11 +49,11 @@ public class DynaQueryBuilder {
 	private static final String IS_NOT_EMPTY = "IsNotEmpty";
 	private static final String IS_NOT_NULL = "IsNotNull";
 	private static final String IS_NULL = "IsNull";
-    private static final String LESS_THAN = "LessThan";
-    private static final String LESS_THAN_OR_EQUAL = "LessThanEqual";
-    private static final String LIKE = "Like";
-    private static final String LIKE_IC = "LikeIc";
-    private static final String NOT_EQUAL = "NotEqual";
+	private static final String LESS_THAN = "LessThan";
+	private static final String LESS_THAN_OR_EQUAL = "LessThanEqual";
+	private static final String LIKE = "Like";
+	private static final String LIKE_IC = "LikeIc";
+	private static final String NOT_EQUAL = "NotEqual";
 
 	private static Pattern DYNA_QUERY_PATTERN = Pattern.compile("^(findBy|countBy|findUniqueBy)([A-Z]\\w*)");
 
@@ -112,11 +112,15 @@ public class DynaQueryBuilder {
 		final String dynaQueryExpression = matcher.group(2);
 		String[] properties = DYNA_QUERY_OPERATOR_PATTERN.split(dynaQueryExpression);
 		Matcher logicalOperatorsMatcher = DYNA_QUERY_OPERATOR_PATTERN.matcher(dynaQueryExpression);
+		Criterion currentCondition = null;
 		for (String property : properties) {
-			criteria.add(this.createCriterion(property));
+//			criteria.add(this.createCriterion(property));
 //			if (logicalOperatorsMatcher.find()) {
 //				criteria.
+//			} else {
+//				
 //			}
+//			criteria.add(condition);
 		}
 		return criteria;
 	}
@@ -148,7 +152,7 @@ public class DynaQueryBuilder {
 	Object[] getPropertyValues(int size) {
 		if (this.params.length < (propertyValueIndex + size)) {
 			Object[] values = ArrayUtils.subarray(this.params, propertyValueIndex, propertyValueIndex + size);
-			propertyValueIndex++;
+			propertyValueIndex += size;
 			return values;
 		} else {
 			throw new QueryException(MessageFormat.format("The number of parameters ({0}) does not "
