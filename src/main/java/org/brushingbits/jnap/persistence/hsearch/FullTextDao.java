@@ -33,8 +33,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.brushingbits.jnap.bean.model.IndexedModel;
 import org.brushingbits.jnap.bean.paging.PagingDataHolder;
-import org.brushingbits.jnap.persistence.FullTextDao;
-import org.brushingbits.jnap.persistence.hibernate.DaoSupport;
+import org.brushingbits.jnap.persistence.hibernate.Dao;
 import org.brushingbits.jnap.util.ReflectionUtils;
 import org.hibernate.search.FullTextQuery;
 import org.hibernate.search.FullTextSession;
@@ -50,8 +49,7 @@ import org.springframework.beans.BeanUtils;
  * @param <E>
  * @see IndexedModel
  */
-public abstract class FullTextDaoSupport<E extends IndexedModel> extends
-		DaoSupport<E> implements FullTextDao<E> {
+public abstract class FullTextDao<E extends IndexedModel> extends Dao<E> {
 
 	protected static ThreadLocal<FullTextSession> fullTextSessionHolder = new ThreadLocal<FullTextSession>();
 
