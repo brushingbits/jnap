@@ -18,7 +18,8 @@
  */
 package org.brushingbits.jnap.persistence.hibernate;
 
-import java.text.MessageFormat;
+import static java.text.MessageFormat.format;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,9 +31,11 @@ import org.hibernate.Criteria;
 import org.hibernate.QueryException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Junction;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.metadata.ClassMetadata;
 import org.springframework.util.Assert;
 
 /**
@@ -59,19 +62,20 @@ public class DynaQueryBuilder {
 
 	private static Pattern DYNA_QUERY_OPERATOR_PATTERN = Pattern.compile("Or|And");
 
-	private static Pattern DYNA_QUERY_EXPRESSION_PATTERN = Pattern.compile(StringUtils.join(new String[] {
-			BETWEEN, EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL, IS_EMPTY, IS_NOT_EMPTY,
-			IS_NOT_NULL, IS_NULL, LESS_THAN, LESS_THAN_OR_EQUAL, LIKE, LIKE_IC, NOT_EQUAL
-	}, '|'));
+	private static Pattern DYNA_QUERY_EXPRESSION_PATTERN = Pattern.compile(format("([A-Z]\\w*)({0})",
+			StringUtils.join(new String[] {	BETWEEN, EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL,
+					IS_EMPTY, IS_NOT_EMPTY, IS_NOT_NULL, IS_NULL, LESS_THAN,
+					LESS_THAN_OR_EQUAL, LIKE, LIKE_IC, NOT_EQUAL }, '|')));
 
 	private Session session;
 	private String entityName;
 	private String dynaQuery;
 	private Object[] params;
 	private int propertyValueIndex = 0;
+	private ClassMetadata entityMetadata;
 	private Map<String, DynaQueryBuilder.CriterionBuilder> criterionBuilderMap;
 
-	private DynaQueryBuilder(Session session, String entityName, String dynaQuery, Object... params) {
+	DynaQueryBuilder(Session session, String entityName, String dynaQuery, Object... params) {
 		Assert.notNull(session);
 		Assert.hasText(entityName);
 		Assert.hasText(dynaQuery);
@@ -79,6 +83,7 @@ public class DynaQueryBuilder {
 		this.entityName = entityName;
 		this.dynaQuery = dynaQuery;
 		this.params = params == null ? ArrayUtils.EMPTY_OBJECT_ARRAY : params;
+		this.entityMetadata = this.session.getSessionFactory().getClassMetadata(this.entityName);
 		buildCriterionBuilderStrategy();
 	}
 
@@ -111,17 +116,15 @@ public class DynaQueryBuilder {
 		Criteria criteria = this.createCriteria(matcher.group(1).equals("countBy"));
 		final String dynaQueryExpression = matcher.group(2);
 		String[] properties = DYNA_QUERY_OPERATOR_PATTERN.split(dynaQueryExpression);
-		Matcher logicalOperatorsMatcher = DYNA_QUERY_OPERATOR_PATTERN.matcher(dynaQueryExpression);
-		Criterion currentCondition = null;
-		for (String property : properties) {
-//			criteria.add(this.createCriterion(property));
-//			if (logicalOperatorsMatcher.find()) {
-//				criteria.
-//			} else {
-//				
-//			}
-//			criteria.add(condition);
+		if (ArrayUtils.isEmpty(properties)) {
+			throw new QueryException("", this.dynaQuery);
 		}
+		Matcher logicalOperatorsMatcher = DYNA_QUERY_OPERATOR_PATTERN.matcher(dynaQueryExpression);
+		Junction junction = Restrictions.conjunction();
+		for (String property : properties) {
+			junction.add(this.createCriterion(property));
+		}
+		criteria.add(junction);
 		return criteria;
 	}
 
@@ -138,7 +141,7 @@ public class DynaQueryBuilder {
 		String propertyName = property;
 		String criterionType = EQUAL;
 		if (matcher.matches()) {
-			criterionType = matcher.group();
+			criterionType = matcher.group(2);
 			propertyName = StringUtils.remove(propertyName, criterionType);
 		}
 		propertyName = Character.toLowerCase(propertyName.charAt(0)) + propertyName.substring(1);
@@ -150,13 +153,28 @@ public class DynaQueryBuilder {
 	}
 
 	Object[] getPropertyValues(int size) {
-		if (this.params.length < (propertyValueIndex + size)) {
+		if (this.params.length <= (propertyValueIndex + size)) {
 			Object[] values = ArrayUtils.subarray(this.params, propertyValueIndex, propertyValueIndex + size);
 			propertyValueIndex += size;
 			return values;
 		} else {
-			throw new QueryException(MessageFormat.format("The number of parameters ({0}) does not "
-					+ "satisfy DynaQuery expression", Integer.toString(this.params.length)), this.dynaQuery);
+			throw new QueryException(format("The number of parameters ({0}) does not satisfy "
+					+ "DynaQuery expression", Integer.toString(this.params.length)), this.dynaQuery);
+		}
+	}
+
+	void validateQueryProperty(String propertyName, Object value) {
+		if (!ArrayUtils.contains(this.entityMetadata.getPropertyNames(), propertyName)) {
+			throw new QueryException(format("Error creating a DynaQuery, the property {0} is not "
+					+ "mapped for entity {1}.", propertyName, this.entityName), this.dynaQuery);
+		}
+		if (value != null) {
+			Class propertyType = this.entityMetadata.getPropertyType(propertyName).getReturnedClass();
+			if (!propertyType.isAssignableFrom(value.getClass())) {
+				throw new QueryException(format("Error creating a DynaQuery, the property {0} type "
+						+ "({1}) is not compatible with the argument type ({2}).", propertyName,
+						propertyType.getName(), value.getClass().getName()), this.dynaQuery);
+			}
 		}
 	}
 
@@ -184,8 +202,11 @@ public class DynaQueryBuilder {
 	private class BetweenCriterionBuilder implements CriterionBuilder {
 
 		public Criterion build(String propertyName) {
-			return Restrictions.between(propertyName, DynaQueryBuilder.this.getNextPropertyValue(),
-					DynaQueryBuilder.this.getNextPropertyValue());
+			Object value1 = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value1);
+			Object value2 = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value2);
+			return Restrictions.between(propertyName, value1, value2);
 		}
 
 	}
@@ -198,7 +219,9 @@ public class DynaQueryBuilder {
 	private class EqualCriterionBuilder implements CriterionBuilder {
 
 		public Criterion build(String propertyName) {
-			return Restrictions.eq(propertyName, DynaQueryBuilder.this.getNextPropertyValue());
+			Object value = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value);
+			return Restrictions.eq(propertyName, value);
 		}
 
 	}
@@ -211,6 +234,8 @@ public class DynaQueryBuilder {
 	private class GreaterThanCriterionBuilder implements CriterionBuilder {
 
 		public Criterion build(String propertyName) {
+			Object value = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value);
 			return Restrictions.gt(propertyName, DynaQueryBuilder.this.getNextPropertyValue());
 		}
 
@@ -224,6 +249,8 @@ public class DynaQueryBuilder {
 	private class GreaterThanEqualCriterionBuilder implements CriterionBuilder {
 
 		public Criterion build(String propertyName) {
+			Object value = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value);
 			return Restrictions.ge(propertyName, DynaQueryBuilder.this.getNextPropertyValue());
 		}
 
@@ -237,6 +264,7 @@ public class DynaQueryBuilder {
 	private class IsEmptyCriterionBuilder implements CriterionBuilder {
 		
 		public Criterion build(String propertyName) {
+			validateQueryProperty(propertyName, null);
 			return Restrictions.isEmpty(propertyName);
 		}
 		
@@ -250,6 +278,7 @@ public class DynaQueryBuilder {
 	private class IsNotEmptyCriterionBuilder implements CriterionBuilder {
 		
 		public Criterion build(String propertyName) {
+			validateQueryProperty(propertyName, null);
 			return Restrictions.isNotEmpty(propertyName);
 		}
 		
@@ -263,6 +292,7 @@ public class DynaQueryBuilder {
 	private class IsNotNullCriterionBuilder implements CriterionBuilder {
 		
 		public Criterion build(String propertyName) {
+			validateQueryProperty(propertyName, null);
 			return Restrictions.isNotNull(propertyName);
 		}
 		
@@ -276,6 +306,7 @@ public class DynaQueryBuilder {
 	private class IsNullCriterionBuilder implements CriterionBuilder {
 		
 		public Criterion build(String propertyName) {
+			validateQueryProperty(propertyName, null);
 			return Restrictions.isNull(propertyName);
 		}
 		
@@ -288,7 +319,9 @@ public class DynaQueryBuilder {
 	private class LessThanCriterionBuilder implements CriterionBuilder {
 		
 		public Criterion build(String propertyName) {
-			return Restrictions.lt(propertyName, DynaQueryBuilder.this.getNextPropertyValue());
+			Object value = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value);
+			return Restrictions.lt(propertyName, value);
 		}
 		
 	}
@@ -325,6 +358,7 @@ public class DynaQueryBuilder {
 				throw new QueryException("Error creating DynaQuery. You can only use 'Like' "
 						+ "operator on String properties.",	DynaQueryBuilder.this.dynaQuery);
 			}
+			validateQueryProperty(propertyName, propertyValue);
 			return this.ignoreCase
 				? Restrictions.ilike(propertyName, (String) propertyValue, MatchMode.ANYWHERE)
 				: Restrictions.like(propertyName, (String) propertyValue, MatchMode.ANYWHERE);
@@ -340,7 +374,9 @@ public class DynaQueryBuilder {
 	private class NotEqualCriterionBuilder implements CriterionBuilder {
 		
 		public Criterion build(String propertyName) {
-			return Restrictions.ne(propertyName, DynaQueryBuilder.this.getNextPropertyValue());
+			Object value = DynaQueryBuilder.this.getNextPropertyValue();
+			validateQueryProperty(propertyName, value);
+			return Restrictions.ne(propertyName, value);
 		}
 		
 	}
