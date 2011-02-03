@@ -93,7 +93,7 @@ public class Response {
 	
 	public static Response exception(String resultName, Exception ex) {
 		return Response.build(resultName, INTERNAL_SERVER_ERROR).entity(
-				new ValidationBean(ex)).avoidCaching();
+				new ValidationBean(ex)).avoidCaching().noPropertyFiltering();
 	}
 
 	public static Response build(String resultName, Status status) {
