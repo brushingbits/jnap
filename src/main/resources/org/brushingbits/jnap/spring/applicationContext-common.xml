@@ -6,4 +6,10 @@
 	
 	<bean id="beanLocator" class="org.brushingbits.jnap.util.BeanLocator" factory-method="get" />
 
+	<!-- Spring Post Processors -->
+	<bean id="persistenceExceptionTranslationPostProcessor"
+		class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor" />
+	<bean id="daoFactoryPostProcessor"
+		class="org.brushingbits.jnap.persistence.factory.DaoFactoryPostProcessor" />
+
 </beans>
