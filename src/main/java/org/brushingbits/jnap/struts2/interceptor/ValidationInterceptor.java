@@ -30,8 +30,11 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import javax.validation.groups.Default;
+import javax.ws.rs.HttpMethod;
 
+import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.interceptor.validation.SkipValidation;
+import org.brushingbits.jnap.struts2.StrutsHelper;
 import org.brushingbits.jnap.util.ReflectionUtils;
 import org.brushingbits.jnap.validation.Struts2MessageInterpolator;
 import org.brushingbits.jnap.validation.ValidationConfig;
@@ -84,10 +87,7 @@ public class ValidationInterceptor extends MethodFilterInterceptor {
 		Object action = invocation.getAction();
 		Method method = action.getClass().getMethod(invocation.getProxy().getMethod(), new Class[] {});
 
-		ValidationConfig validationConfig = ReflectionUtils.getAnnotation(ValidationConfig.class, method);
-		boolean shouldValidate = ReflectionUtils.getAnnotation(SkipValidation.class, method) == null
-				|| (validationConfig != null && !validationConfig.skip());
-		if (shouldValidate) {
+		if (shouldValidate(method)) {
 			
 			// i18n text provider, if present will be checked for validation message
 			TextProvider textProvider = null;
@@ -98,6 +98,7 @@ public class ValidationInterceptor extends MethodFilterInterceptor {
 			Class<?>[] groups = { Default.class };
 			boolean ignoreNonexistentParams = true;
 			
+			ValidationConfig validationConfig = ReflectionUtils.getAnnotation(ValidationConfig.class, method);
 			if (validationConfig != null) {
 				groups = validationConfig.groups();
 				ignoreNonexistentParams = validationConfig.ignoreNonexistentParams();
@@ -155,6 +156,14 @@ public class ValidationInterceptor extends MethodFilterInterceptor {
 			}
 
 		}
+	}
+
+	private boolean shouldValidate(Method method) {
+		boolean isGetHttpMethod = HttpMethod.GET.equalsIgnoreCase(
+				StrutsHelper.getHttpMethod(ServletActionContext.getRequest()));
+		boolean noSkipValidation = ReflectionUtils.getAnnotation(SkipValidation.class, method) == null;
+		boolean hasValidationConfig = ReflectionUtils.getAnnotation(ValidationConfig.class, method) != null;
+		return noSkipValidation && (!isGetHttpMethod || hasValidationConfig);
 	}
 
 	/**

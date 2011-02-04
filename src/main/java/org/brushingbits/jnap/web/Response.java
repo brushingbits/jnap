@@ -84,7 +84,8 @@ public class Response {
 	}
 
 	public static Response invalid(String resultName, Object validationEntity) {
-		return Response.build(resultName, BAD_REQUEST).entity(validationEntity).avoidCaching();
+		return Response.build(resultName, BAD_REQUEST).entity(
+				validationEntity).avoidCaching().noPropertyFiltering();
 	}
 
 	public static Response exception(Exception ex) {

@@ -25,11 +25,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
-import org.apache.struts2.interceptor.validation.SkipValidation;
 import org.brushingbits.jnap.appservice.CrudServiceSupport;
 import org.brushingbits.jnap.bean.model.PersistentModel;
 import org.brushingbits.jnap.validation.Groups;
 import org.brushingbits.jnap.validation.ValidationConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 /**
@@ -42,18 +42,24 @@ import org.brushingbits.jnap.validation.ValidationConfig;
  */
 public abstract class RestCrudControllerSupport<E extends PersistentModel> extends RestControllerSupport<E> {
 
+	@Autowired
+	protected CrudServiceSupport<E> crudService;
 
 	@GET
 	@Path("/")
-	@SkipValidation
 	public Response index() {
-		this.modelList = getService().findAll();
+		return Response.ok(INDEX);
+	}
+
+	@GET
+	@Path("/list")
+	public Response list() {
+		this.modelList = crudService.findAll();
 		return Response.ok(INDEX);
 	}
 
 	@GET
 	@Path("/{model.id}")
-	@SkipValidation
 	public Response show() {
 		refreshModel();
 		return Response.ok(SHOW);
@@ -61,7 +67,6 @@ public abstract class RestCrudControllerSupport<E extends PersistentModel> exten
 
 	@GET
 	@Path("/new")
-	@SkipValidation
 	public Response editNew() {
 		resetModel();
 		return Response.ok(EDIT_NEW);
@@ -71,13 +76,12 @@ public abstract class RestCrudControllerSupport<E extends PersistentModel> exten
 	@Path("/")
 	@ValidationConfig(groups = { Default.class, Groups.CreateOp.class })
 	public Response create() {
-		getService().insert(model);
+		crudService.insert(model);
 		return Response.ok(EDIT_NEW);
 	}
 
 	@GET
 	@Path("/{model.id}/edit")
-	@SkipValidation
 	public Response edit() {
 		refreshModel();
 		return Response.ok(EDIT);
@@ -87,7 +91,7 @@ public abstract class RestCrudControllerSupport<E extends PersistentModel> exten
 	@Path("/{model.id}")
 	@ValidationConfig(groups = { Default.class, Groups.UpdateOp.class })
 	public Response update() {
-		getService().update(model);
+		crudService.update(model);
 		return Response.ok(EDIT);
 	}
 
@@ -95,7 +99,7 @@ public abstract class RestCrudControllerSupport<E extends PersistentModel> exten
 	@Path("/{model.id}")
 	@ValidationConfig(groups = { Default.class, Groups.DeleteOp.class })
 	public Response delete() {
-		getService().delete(model);
+		crudService.delete(model);
 		return Response.ok(INDEX);
 	}
 
@@ -104,8 +108,7 @@ public abstract class RestCrudControllerSupport<E extends PersistentModel> exten
 	 */
 	@Override
 	protected void refreshModel() {
-		this.model = getService().findById(model.getId());
+		this.model = crudService.findById(model.getId());
 	}
 
-	protected abstract CrudServiceSupport<E> getService();
 }
