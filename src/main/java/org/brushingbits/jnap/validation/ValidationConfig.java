@@ -56,11 +56,4 @@ public @interface ValidationConfig {
 	 */
 	String[] excludes() default {};
 
-	/**
-	 * If set to {@code true} is the same as {@link org.apache.struts2.interceptor.validation.SkipValidation},
-	 * else nothing changes and the validation will occur. Setting it explicitly to {@code false}
-	 * (the default) has no effect other than explicit code documentation.
-	 */
-	boolean skip() default false;
-
 }
