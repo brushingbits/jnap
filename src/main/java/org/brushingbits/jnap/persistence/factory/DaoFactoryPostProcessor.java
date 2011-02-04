@@ -58,7 +58,7 @@ public class DaoFactoryPostProcessor implements BeanDefinitionRegistryPostProces
 
 		// get already defined beans of type Dao
 		final Set<Class<? extends PersistentModel>> alreadyDefinedDaos = new HashSet<Class<? extends PersistentModel>>();
-		for (String beanName : beanFactory.getBeanNamesForType(Dao.class)) {
+		for (String beanName : beanFactory.getBeanNamesForType(Dao.class, true, false)) {
 			Dao<? extends PersistentModel> dao = beanFactory.getBean(beanName, Dao.class);
 			alreadyDefinedDaos.add(dao.getEntityClass());
 		}
