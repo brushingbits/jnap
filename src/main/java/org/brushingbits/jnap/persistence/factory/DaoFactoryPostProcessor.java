@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections.Closure;
-import org.apache.commons.collections.CollectionUtils;
 import org.brushingbits.jnap.bean.model.IndexedModel;
 import org.brushingbits.jnap.bean.model.PersistentModel;
 import org.brushingbits.jnap.persistence.hibernate.Dao;
@@ -66,18 +64,15 @@ public class DaoFactoryPostProcessor implements BeanDefinitionRegistryPostProces
 		for (String sessionFactoryName : beanFactory.getBeanNamesForType(SessionFactory.class)) {
 			final SessionFactory sessionFactory = beanFactory.getBean(sessionFactoryName, SessionFactory.class);
 			Map<String, ClassMetadata> entitiesMetadata = sessionFactory.getAllClassMetadata();
-			CollectionUtils.forAllDo(entitiesMetadata.values(), new Closure() {
-				public void execute(Object input) {
-					Assert.isAssignable(ClassMetadata.class, input.getClass());
-					Class<? extends PersistentModel> entityClass = ((ClassMetadata) input).getMappedClass(EntityMode.POJO);
-					if (entityClass != null && !alreadyDefinedDaos.contains(entityClass)) {
-						String daoName = entityClass.getSimpleName() + "Dao";
-						daoName = Character.toLowerCase(daoName.charAt(0)) + daoName.substring(1);
-						beanFactory.registerBeanDefinition(daoName,
-								createDaoDefinition(entityClass, sessionFactory));
-					}
+			for (ClassMetadata entityMetadata : entitiesMetadata.values()) {
+				Class<? extends PersistentModel> entityClass = entityMetadata.getMappedClass(EntityMode.POJO);
+				if (entityClass != null && !alreadyDefinedDaos.contains(entityClass)) {
+					String daoName = entityClass.getSimpleName() + "Dao";
+					daoName = Character.toLowerCase(daoName.charAt(0)) + daoName.substring(1);
+					beanFactory.registerBeanDefinition(daoName,
+							createDaoDefinition(entityClass, sessionFactory));
 				}
-			});
+			}
 		}
 	}
 

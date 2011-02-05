@@ -32,6 +32,7 @@ import org.hibernate.QueryException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Junction;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.metadata.ClassMetadata;
@@ -65,11 +66,13 @@ public class DynaQueryBuilder {
 	private static final String LOGICAL_OPERATOR_OR = "Or";
 
 	private static final String LOGICAL_OPERATOR_AND = "And";
-	
+
 	private static Pattern DYNA_QUERY_OPERATOR_PATTERN = Pattern.compile(format("({0}|{1})",
 			LOGICAL_OPERATOR_OR, LOGICAL_OPERATOR_AND));
 
 	private static Pattern DYNA_QUERY_PATTERN = Pattern.compile("^(findBy|countBy|findUniqueBy)([A-Z]\\w*)");
+
+	private static Pattern ORDER_BY_PATTERN = Pattern.compile("((OrderBy)([A-Z]\\w*)(Asc|Desc))$");
 
 	private Session session;
 	private String entityName;
@@ -126,7 +129,21 @@ public class DynaQueryBuilder {
 					this.dynaQuery);
 		}
 		Criteria criteria = this.createCriteria(matcher.group(1).equals("countBy"));
-		final String dynaQueryExpression = matcher.group(2);
+		String dynaQueryExpression = matcher.group(2);
+
+		// order by
+		Matcher orderByMatcher = ORDER_BY_PATTERN.matcher(dynaQueryExpression);
+		if (orderByMatcher.find()) {
+			dynaQueryExpression = StringUtils.remove(dynaQueryExpression, orderByMatcher.group());
+			String orderByProperty = normalizePropertyName(orderByMatcher.group(3));
+			String orderByDirection = orderByMatcher.group(4);
+			Order orderBy = "Desc".equals(orderByDirection)
+					? Order.desc(orderByProperty)
+					: Order.asc(orderByProperty);
+			criteria.addOrder(orderBy);
+		}
+
+		// split properties
 		String[] properties = DYNA_QUERY_OPERATOR_PATTERN.split(dynaQueryExpression);
 		if (properties.length == 0 || properties.length > 2) {
 			throw new QueryException(format("The DynaQuery syntax is incorrect. Dynamic queries must have "
@@ -167,8 +184,17 @@ public class DynaQueryBuilder {
 				break;
 			}
 		}
-		propertyName = Character.toLowerCase(propertyName.charAt(0)) + propertyName.substring(1);
+		propertyName = normalizePropertyName(propertyName);
 		return this.criterionBuilderMap.get(criterionType).build(propertyName);
+	}
+
+	/**
+	 * @param propertyName
+	 * @return
+	 */
+	private String normalizePropertyName(String propertyName) {
+		propertyName = Character.toLowerCase(propertyName.charAt(0)) + propertyName.substring(1);
+		return propertyName;
 	}
 
 	Object getNextPropertyValue() {
